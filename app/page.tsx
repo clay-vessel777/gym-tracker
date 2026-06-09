@@ -141,7 +141,7 @@ export default function Home() {
             onClick={() => router.push(`/goals?profile=${mode === 'guest' ? 'guest' : profileKey}`)}
             className="w-full rounded-xl bg-[#1a1a1a] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
           >
-            <p className="font-bold text-lg">📜 Goals</p>
+            <p className="font-bold text-lg">🎯 Goals</p>
             <p className="text-gray-400 text-sm mt-0.5">Track measurements & set targets</p>
           </button>
 
@@ -149,7 +149,7 @@ export default function Home() {
             onClick={() => router.push('/history')}
             className="w-full rounded-xl bg-[#1a1a1a] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
           >
-            <p className="font-bold text-lg">📖 History</p>
+            <p className="font-bold text-lg">📜 History</p>
             <p className="text-gray-400 text-sm mt-0.5">View past workouts</p>
           </button>
         </div>

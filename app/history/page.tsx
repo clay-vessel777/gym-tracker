@@ -26,7 +26,7 @@ export default function HistoryPage() {
 
       {sessions.length === 0 && (
         <div className="flex flex-col items-center justify-center flex-1 gap-3 text-center py-16">
-          <span className="text-5xl">📖</span>
+          <span className="text-5xl">📜</span>
           <p className="text-gray-400">No workouts logged yet.</p>
           <p className="text-gray-600 text-sm">Your history will appear here after your first session.</p>
         </div>
