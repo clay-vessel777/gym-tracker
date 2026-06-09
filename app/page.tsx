@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { WorkoutDay, TimeSlot } from '@/lib/data';
-import { getNextDay, getCurrentPhase, getSessions, getInProgress, loadSessionsFromCloud, loadWeightsFromCloud, getWorkoutStreak, getDaysSinceLastWorkout, getWeeklyStats, WeeklyStats } from '@/lib/storage';
+import { getNextDay, getCurrentPhase, getSessions, getInProgress, clearInProgress, loadSessionsFromCloud, loadWeightsFromCloud, getWorkoutStreak, getDaysSinceLastWorkout, getWeeklyStats, WeeklyStats } from '@/lib/storage';
 import { useTheme } from '@/components/ThemeProvider';
 
 type Mode = 'jlord' | 'jasmine' | 'guest' | null;
@@ -78,14 +78,33 @@ export default function Home() {
 
         {/* Resume banner */}
         {inProgress && (
-          <button
-            onClick={() => router.push('/workout?resume=1')}
-            className="w-full rounded-xl border px-4 py-3 text-left"
+          <div
+            className="w-full rounded-xl border px-4 py-3"
             style={{ backgroundColor: 'var(--accent-10)', borderColor: 'var(--accent-40)' }}
           >
             <p className="font-semibold text-sm" style={{ color: 'var(--accent)' }}>{t.inProgressEmoji} Workout in progress</p>
-            <p className="text-gray-400 text-xs mt-0.5">Tap to resume where you left off →</p>
-          </button>
+            <p className="text-gray-400 text-xs mt-0.5 mb-3">Tap to resume where you left off →</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => router.push('/workout?resume=1')}
+                className="flex-1 py-2 rounded-lg text-sm font-semibold text-white"
+                style={{ backgroundColor: 'var(--accent)' }}
+              >
+                Resume
+              </button>
+              <button
+                onClick={() => {
+                  if (confirm('Erase this session? This cannot be undone.')) {
+                    clearInProgress();
+                    setInProgress(false);
+                  }
+                }}
+                className="flex-1 py-2 rounded-lg text-sm font-semibold text-red-400 border border-red-800/60 bg-transparent"
+              >
+                Erase Session
+              </button>
+            </div>
+          </div>
         )}
 
         {/* Phase banner */}
