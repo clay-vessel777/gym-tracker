@@ -235,7 +235,7 @@ function WorkoutInner() {
                       key={setNum}
                       onClick={() => !done && completeSet(currentIdx)}
                       className={`flex-1 rounded-xl font-bold transition-all active:scale-95 py-4
-                        ${done ? 'bg-[#f5a623] text-black' : 'bg-gray-800 text-gray-400 border border-gray-700'}
+                        ${done ? 'bg-green-500 text-white' : 'bg-gray-800 text-gray-400 border border-gray-700'}
                         ${isNext ? 'ring-2 ring-[#f5a623]/60' : ''}
                       `}
                     >
