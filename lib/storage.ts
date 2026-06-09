@@ -348,3 +348,109 @@ export function getCurrentPhase(): 1 | 2 | 3 {
   if (count < 19) return 2;
   return 3;
 }
+
+// ---- Streak ----
+
+// Returns the number of consecutive calendar weeks (Mon–Sun) with at least 1 workout,
+// counting back from the most recent week that has a workout.
+export function getWorkoutStreak(): number {
+  const sessions = getLocalSessions();
+  if (sessions.length === 0) return 0;
+
+  // Get Monday of a given date
+  function getMonday(date: Date): string {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = day === 0 ? -6 : 1 - day; // adjust for Sunday
+    d.setDate(d.getDate() + diff);
+    return d.toISOString().split('T')[0];
+  }
+
+  const weekSet = new Set(sessions.map(s => getMonday(new Date(s.date))));
+  const weeks = Array.from(weekSet).sort().reverse();
+
+  let streak = 0;
+  let current = getMonday(new Date());
+
+  for (const week of weeks) {
+    if (week === current) {
+      streak++;
+      // Go back one week
+      const d = new Date(current);
+      d.setDate(d.getDate() - 7);
+      current = d.toISOString().split('T')[0];
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+export function getDaysSinceLastWorkout(): number | null {
+  const sessions = getLocalSessions();
+  if (sessions.length === 0) return null;
+  const last = new Date(sessions[0].date);
+  const now = new Date();
+  return Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+// ---- Weekly stats ----
+
+export type WeeklyStats = {
+  workouts: number;
+  totalVolume: number; // sum of weight × sets across all exercises
+  prs: number;
+};
+
+export function getWeeklyStats(): WeeklyStats {
+  const sessions = getLocalSessions();
+  const now = new Date();
+  // Start of this week (Monday)
+  const day = now.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() + diff);
+  weekStart.setHours(0, 0, 0, 0);
+
+  const thisWeek = sessions.filter(s => new Date(s.date) >= weekStart);
+  const workouts = thisWeek.length;
+  const totalVolume = thisWeek.reduce((acc, s) =>
+    acc + s.exercises.reduce((a, e) => a + (e.weightUsed * e.setsCompleted), 0), 0);
+  const prs = thisWeek.reduce((acc, s) => acc + (s.prs?.length ?? 0), 0);
+
+  return { workouts, totalVolume, prs };
+}
+
+// ---- PR detection ----
+
+// Returns exercise IDs where the session's weight beats all-time best BEFORE this session
+export function detectPRs(session: WorkoutSession, priorSessions: WorkoutSession[]): string[] {
+  const prs: string[] = [];
+  for (const ex of session.exercises) {
+    if (ex.weightUsed <= 0) continue;
+    const best = priorSessions
+      .flatMap(s => s.exercises.filter(e => e.id === ex.id && e.weightUsed > 0))
+      .reduce((max, e) => Math.max(max, e.weightUsed), 0);
+    if (ex.weightUsed > best) prs.push(ex.id);
+  }
+  return prs;
+}
+
+export function getExerciseBest(exerciseId: string): number {
+  return getLocalSessions()
+    .flatMap(s => s.exercises.filter(e => e.id === exerciseId && e.weightUsed > 0))
+    .reduce((max, e) => Math.max(max, e.weightUsed), 0);
+}
+
+// ---- Rest timer preference ----
+
+const REST_TIME_KEY = 'gym_rest_time';
+
+export function getRestTime(): number {
+  if (typeof window === 'undefined') return 90;
+  return Number(localStorage.getItem(REST_TIME_KEY) ?? 90);
+}
+
+export function setRestTime(seconds: number): void {
+  if (typeof window !== 'undefined') localStorage.setItem(REST_TIME_KEY, String(seconds));
+}

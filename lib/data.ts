@@ -159,4 +159,6 @@ export type WorkoutSession = {
   jasmineMode: boolean;
   durationMinutes: number;
   exercises: ExerciseLog[];
+  notes?: string;
+  prs?: string[]; // exercise IDs that hit a PR this session
 };

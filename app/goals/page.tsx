@@ -7,6 +7,7 @@ import {
   loadGoalEntries, saveGoalEntries, getLatestValues, daysSinceLastEntry,
   loadGoalTargets, saveGoalTarget, markGoalAchieved,
 } from '@/lib/storage';
+import Sparkline from '@/components/Sparkline';
 
 const ALL_METRICS: GoalMeasurementType[] = [
   'weight', 'chest', 'waist', 'hips', 'bicep_left', 'bicep_right',
@@ -284,12 +285,25 @@ function GoalsInner() {
           <div>
             <p className="text-gray-400 text-xs uppercase tracking-widest mb-2">Current Measurements</p>
             <div className="rounded-xl bg-[var(--card-bg)] border border-gray-800 divide-y divide-gray-800">
-              {ALL_METRICS.filter(m => latest[m]).map(m => (
-                <div key={m} className="flex items-center justify-between px-4 py-3">
-                  <span className="text-sm text-gray-300">{MEASUREMENT_LABELS[m]}</span>
-                  <span className="text-sm font-bold">{latest[m]!.value} <span className="text-gray-500 font-normal text-xs">{MEASUREMENT_UNITS[m]}</span></span>
-                </div>
-              ))}
+              {ALL_METRICS.filter(m => latest[m]).map(m => {
+                const metricHistory = entries
+                  .filter(e => e.measurementType === m)
+                  .sort((a, b) => a.date.localeCompare(b.date))
+                  .map(e => e.value);
+                return (
+                  <div key={m} className="flex items-center justify-between px-4 py-3 gap-3">
+                    <span className="text-sm text-gray-300">{MEASUREMENT_LABELS[m]}</span>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      {metricHistory.length >= 2 && (
+                        <Sparkline values={metricHistory} width={60} height={24} />
+                      )}
+                      <span className="text-sm font-bold text-right">
+                        {latest[m]!.value} <span className="text-gray-500 font-normal text-xs">{MEASUREMENT_UNITS[m]}</span>
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

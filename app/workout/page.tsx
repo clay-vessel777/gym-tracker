@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { EXERCISES, EXERCISE_GROUPS, WORKOUT_TEMPLATES, CARDIO_MINUTES, COOLDOWN_MINUTES, WorkoutDay, TimeSlot, ExerciseLog } from '@/lib/data';
-import { getLastWeight, saveSession, getWeightHistory, saveInProgress, clearInProgress, getInProgress } from '@/lib/storage';
+import { getLastWeight, saveSession, getWeightHistory, saveInProgress, clearInProgress, getInProgress, getExerciseBest, detectPRs, getSessions } from '@/lib/storage';
 import RestTimer from '@/components/RestTimer';
 import { useTheme } from '@/components/ThemeProvider';
 import { v4 as uuidv4 } from 'uuid';
@@ -29,7 +29,10 @@ function WorkoutInner() {
   const [currentIdx, setCurrentIdx] = useState(() => savedProgress?.currentIdx ?? -1);
   const [showTimer, setShowTimer] = useState(false);
   const [showSwap, setShowSwap] = useState(false);
+  const [sessionNotes, setSessionNotes] = useState('');
+  const [sessionPRs, setSessionPRs] = useState<string[]>([]);
   const startTimeRef = useRef<number>(savedProgress?.startTime ?? Date.now());
+  const phase = getSessions().length < 19 ? (getSessions().length < 7 ? 1 : 2) : 3;
 
   const [logs, setLogs] = useState<ExerciseLog[]>(() => {
     if (savedProgress?.logs) return savedProgress.logs;
@@ -88,6 +91,9 @@ function WorkoutInner() {
   async function finishWorkout() {
     const duration = Math.round((Date.now() - startTimeRef.current) / 60000);
     if (!guestMode) {
+      const priorSessions = getSessions();
+      const prs = detectPRs({ id: '', date: '', day, timeSlot, jasmineMode, durationMinutes: duration, exercises: logs }, priorSessions);
+      setSessionPRs(prs);
       await saveSession({
         id: uuidv4(),
         date: new Date().toISOString(),
@@ -96,6 +102,8 @@ function WorkoutInner() {
         jasmineMode,
         durationMinutes: duration,
         exercises: logs,
+        notes: sessionNotes.trim() || undefined,
+        prs,
       });
     }
     clearInProgress();
@@ -216,6 +224,12 @@ function WorkoutInner() {
                   {history.length > 1 && ` · Best: ${Math.max(...history)} lbs`}
                 </p>
               )}
+              {/* Progressive overload nudge — Phase 3 only, when weight matches all-time best */}
+              {phase === 3 && currentLog.weightUsed > 0 && currentLog.weightUsed === getExerciseBest(currentLog.id) && history.length > 1 && (
+                <p className="text-xs text-center mt-1.5" style={{ color: 'var(--accent)' }}>
+                  💡 That's your best — try {currentLog.weightUsed + 5} lbs next time?
+                </p>
+              )}
             </div>
 
             {/* Sets */}
@@ -302,7 +316,7 @@ function WorkoutInner() {
 
         {/* COOLDOWN / FINISH SCREEN */}
         {isDone && (
-          <div className="flex flex-col items-center gap-6 py-8">
+          <div className="flex flex-col items-center gap-5 py-6">
             <div className="text-6xl">{t.cooldownEmoji}</div>
             <div className="text-center">
               <h2 className="text-2xl font-bold">{t.cooldownTitle}</h2>
@@ -312,9 +326,24 @@ function WorkoutInner() {
                 <p className="text-gray-600 text-xs mt-2">Guest mode — this session won't be saved.</p>
               )}
             </div>
+
+            {/* Session notes */}
+            {!guestMode && (
+              <div className="w-full bg-[var(--card-bg)] border border-gray-800 rounded-xl px-4 py-3">
+                <p className="text-gray-400 text-xs mb-2">Session notes (optional)</p>
+                <textarea
+                  value={sessionNotes}
+                  onChange={e => setSessionNotes(e.target.value)}
+                  placeholder="How did it go? Energy, mood, anything notable…"
+                  className="w-full bg-transparent text-sm text-white placeholder-gray-600 outline-none resize-none"
+                  rows={2}
+                />
+              </div>
+            )}
+
             <button
               onClick={finishWorkout}
-              className={`mt-6 w-full max-w-xs py-4 bg-[var(--accent)] text-white font-bold ${t.btnRadius} text-lg active:scale-95 transition-transform`}
+              className={`w-full max-w-xs py-4 bg-[var(--accent)] text-white font-bold ${t.btnRadius} text-lg active:scale-95 transition-transform`}
             >
               {guestMode ? 'Done → Home' : t.finishCta}
             </button>

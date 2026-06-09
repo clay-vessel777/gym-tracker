@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { WorkoutDay, TimeSlot } from '@/lib/data';
-import { getNextDay, getCurrentPhase, getSessions, getInProgress, loadSessionsFromCloud, loadWeightsFromCloud } from '@/lib/storage';
+import { getNextDay, getCurrentPhase, getSessions, getInProgress, loadSessionsFromCloud, loadWeightsFromCloud, getWorkoutStreak, getDaysSinceLastWorkout, getWeeklyStats, WeeklyStats } from '@/lib/storage';
 import { useTheme } from '@/components/ThemeProvider';
 
 type Mode = 'jlord' | 'jasmine' | 'guest' | null;
@@ -20,16 +20,25 @@ export default function Home() {
   const [phase, setPhase] = useState<1 | 2 | 3>(1);
   const [sessionCount, setSessionCount] = useState(0);
   const [inProgress, setInProgress] = useState(false);
+  const [streak, setStreak] = useState(0);
+  const [daysSince, setDaysSince] = useState<number | null>(null);
+  const [weeklyStats, setWeeklyStats] = useState<WeeklyStats>({ workouts: 0, totalVolume: 0, prs: 0 });
 
   useEffect(() => {
     setNextDay(getNextDay());
     setPhase(getCurrentPhase());
     setSessionCount(getSessions().length);
     setInProgress(!!getInProgress());
+    setStreak(getWorkoutStreak());
+    setDaysSince(getDaysSinceLastWorkout());
+    setWeeklyStats(getWeeklyStats());
     Promise.all([loadSessionsFromCloud(), loadWeightsFromCloud()]).then(([sessions]) => {
       setSessionCount(sessions.length);
       setPhase(sessions.length < 7 ? 1 : sessions.length < 19 ? 2 : 3);
       setNextDay(getNextDay());
+      setStreak(getWorkoutStreak());
+      setDaysSince(getDaysSinceLastWorkout());
+      setWeeklyStats(getWeeklyStats());
     });
   }, []);
 
@@ -57,6 +66,16 @@ export default function Home() {
           </p>
         </div>
 
+        {/* Days-since nudge — only show if 4+ days and no workout in progress */}
+        {!inProgress && daysSince !== null && daysSince >= 4 && (
+          <div className="w-full rounded-xl border border-gray-700 px-4 py-3 bg-gray-900/60">
+            <p className="text-gray-300 text-sm font-medium">
+              {daysSince === 4 ? '⏰' : daysSince >= 7 ? '😬' : '💤'} It's been <span className="text-white font-bold">{daysSince} days</span> since your last workout.
+            </p>
+            <p className="text-gray-500 text-xs mt-0.5">Time to get back in the dungeon.</p>
+          </div>
+        )}
+
         {/* Resume banner */}
         {inProgress && (
           <button
@@ -76,6 +95,24 @@ export default function Home() {
             <span className="text-gray-500 text-xs">· {sessionCount} sessions logged</span>
           </div>
           <p className="text-gray-400 text-xs mt-1">{t.phases[phase].desc}</p>
+        </div>
+
+        {/* Weekly summary + streak */}
+        <div className="grid grid-cols-3 gap-2">
+          <div className="rounded-xl bg-[var(--card-bg)] border border-gray-800 px-3 py-3 text-center">
+            <p className="text-2xl font-bold">{weeklyStats.workouts}</p>
+            <p className="text-gray-500 text-xs mt-0.5">this week</p>
+          </div>
+          <div className="rounded-xl bg-[var(--card-bg)] border border-gray-800 px-3 py-3 text-center">
+            <p className="text-2xl font-bold" style={{ color: streak > 0 ? 'var(--accent)' : undefined }}>
+              {streak}
+            </p>
+            <p className="text-gray-500 text-xs mt-0.5">wk streak</p>
+          </div>
+          <div className="rounded-xl bg-[var(--card-bg)] border border-gray-800 px-3 py-3 text-center">
+            <p className="text-2xl font-bold text-green-400">{weeklyStats.prs}</p>
+            <p className="text-gray-500 text-xs mt-0.5">PRs this wk</p>
+          </div>
         </div>
 
         <p className="text-sm text-gray-400 -mb-2">{t.whoWorkingOut}</p>

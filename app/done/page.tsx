@@ -48,17 +48,44 @@ export default function DonePage() {
         )}
       </div>
 
+      {/* PR celebration banner */}
+      {session?.prs && session.prs.length > 0 && (
+        <div className="w-full rounded-xl border px-4 py-3 text-center"
+          style={{ backgroundColor: 'var(--accent-10)', borderColor: 'var(--accent-40)' }}>
+          <p className="font-bold text-sm" style={{ color: 'var(--accent)' }}>
+            🏆 {session.prs.length} new PR{session.prs.length > 1 ? 's' : ''}!
+          </p>
+          <p className="text-gray-400 text-xs mt-0.5">
+            {session.exercises.filter(e => session.prs!.includes(e.id)).map(e => e.name).join(' · ')}
+          </p>
+        </div>
+      )}
+
       {session && (
         <div className="w-full bg-[var(--card-bg)] border border-gray-800 rounded-xl divide-y divide-gray-800">
-          {session.exercises.map(ex => (
-            <div key={ex.id} className="flex items-center justify-between px-4 py-3 text-sm">
-              <span className="text-gray-300">{ex.name}</span>
-              <span className="text-gray-500">
-                {ex.setsCompleted}/{ex.totalSets} sets
-                {ex.weightUsed > 0 && ` · ${ex.weightUsed} lbs`}
-              </span>
-            </div>
-          ))}
+          {session.exercises.map(ex => {
+            const isPR = session.prs?.includes(ex.id);
+            return (
+              <div key={ex.id} className="flex items-center justify-between px-4 py-3 text-sm">
+                <span className="text-gray-300 flex items-center gap-1.5">
+                  {ex.name}
+                  {isPR && <span className="text-xs text-green-400 font-semibold">PR</span>}
+                </span>
+                <span className="text-gray-500">
+                  {ex.setsCompleted}/{ex.totalSets} sets
+                  {ex.weightUsed > 0 && ` · ${ex.weightUsed} lbs`}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Session notes */}
+      {session?.notes && (
+        <div className="w-full bg-[var(--card-bg)] border border-gray-800 rounded-xl px-4 py-3 text-left">
+          <p className="text-gray-500 text-xs mb-1">Session notes</p>
+          <p className="text-gray-300 text-sm">{session.notes}</p>
         </div>
       )}
 

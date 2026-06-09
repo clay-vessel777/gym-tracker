@@ -60,20 +60,31 @@ export default function HistoryPage() {
 
               {isOpen && (
                 <div className="border-t border-gray-800 divide-y divide-gray-800/60">
-                  {session.exercises.map(ex => (
-                    <div key={ex.id} className="px-4 py-2.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-200">{ex.name}</span>
-                        <span className="text-xs text-gray-500">
-                          {ex.setsCompleted}/{ex.totalSets} sets
-                          {ex.weightUsed > 0 && ` · ${ex.weightUsed} lbs`}
-                        </span>
-                      </div>
-                      {ex.notes && (
-                        <p className="text-xs text-gray-500 mt-0.5 italic">{ex.notes}</p>
-                      )}
+                  {session.notes && (
+                    <div className="px-4 py-2.5 bg-gray-900/40">
+                      <p className="text-xs text-gray-500 italic">📝 {session.notes}</p>
                     </div>
-                  ))}
+                  )}
+                  {session.exercises.map(ex => {
+                    const isPR = session.prs?.includes(ex.id);
+                    return (
+                      <div key={ex.id} className="px-4 py-2.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-200 flex items-center gap-1.5">
+                            {ex.name}
+                            {isPR && <span className="text-xs text-green-400 font-semibold">PR</span>}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {ex.setsCompleted}/{ex.totalSets} sets
+                            {ex.weightUsed > 0 && ` · ${ex.weightUsed} lbs`}
+                          </span>
+                        </div>
+                        {ex.notes && (
+                          <p className="text-xs text-gray-500 mt-0.5 italic">{ex.notes}</p>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
