@@ -6,6 +6,7 @@ import { WorkoutDay, TimeSlot } from '@/lib/data';
 import { getNextDay, getCurrentPhase, getSessions, getInProgress, loadSessionsFromCloud, loadWeightsFromCloud } from '@/lib/storage';
 
 type Mode = 'jlord' | 'jasmine' | 'guest' | null;
+type Screen = 'mode' | 'menu' | 'setup';
 
 const PHASE_INFO = {
   1: { label: 'Phase 1', desc: 'Just show up. Cardio + 1–2 machines. Learn the space.' },
@@ -16,6 +17,7 @@ const PHASE_INFO = {
 export default function Home() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>(null);
+  const [screen, setScreen] = useState<Screen>('mode');
   const [nextDay, setNextDay] = useState<WorkoutDay>('A');
   const [selectedDay, setSelectedDay] = useState<WorkoutDay | null>(null);
   const [timeSlot, setTimeSlot] = useState<TimeSlot | null>(null);
@@ -50,7 +52,7 @@ export default function Home() {
   }
 
   // ── Mode picker screen ──────────────────────────────────────────────────────
-  if (mode === null) {
+  if (screen === 'mode') {
     return (
       <main className="flex flex-col min-h-dvh max-w-lg mx-auto px-4 py-6 gap-6">
         <div>
@@ -84,7 +86,7 @@ export default function Home() {
 
         <div className="flex flex-col gap-3">
           <button
-            onClick={() => setMode('jlord')}
+            onClick={() => { setMode('jlord'); setScreen('menu'); }}
             className="w-full rounded-xl bg-[#1a1a1a] border border-gray-800 px-4 py-4 text-left active:bg-gray-800 transition-colors"
           >
             <p className="font-bold text-lg">💪 JLord Mode</p>
@@ -92,7 +94,7 @@ export default function Home() {
           </button>
 
           <button
-            onClick={() => setMode('jasmine')}
+            onClick={() => { setMode('jasmine'); setScreen('setup'); }}
             className="w-full rounded-xl bg-[#1a1a1a] border border-gray-800 px-4 py-4 text-left active:bg-gray-800 transition-colors"
           >
             <p className="font-bold text-lg">💕 Jasmine Mode</p>
@@ -100,7 +102,7 @@ export default function Home() {
           </button>
 
           <button
-            onClick={() => setMode('guest')}
+            onClick={() => { setMode('guest'); setScreen('menu'); }}
             className="w-full rounded-xl bg-[#1a1a1a] border border-gray-800 px-4 py-4 text-left active:bg-gray-800 transition-colors"
           >
             <p className="font-bold text-lg">👤 Guest / Debug Mode</p>
@@ -113,12 +115,61 @@ export default function Home() {
 
   const profileKey = mode === 'jasmine' ? 'jasmine' : 'jlord';
 
+  // ── Mode menu screen ─────────────────────────────────────────────────────────
+  if (screen === 'menu') {
+    return (
+      <main className="flex flex-col min-h-dvh max-w-lg mx-auto px-4 py-6 gap-6">
+        <div className="flex items-center gap-3">
+          <button onClick={() => { setMode(null); setScreen('mode'); }} className="text-gray-400 text-sm active:text-white">
+            ← Back
+          </button>
+          <h2 className="font-bold text-lg">
+            {mode === 'jlord' ? '💪 JLord Mode' : '👤 Guest Mode'}
+          </h2>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={() => setScreen('setup')}
+            className="w-full rounded-xl bg-[#f5a623] px-4 py-5 text-left active:opacity-80 transition-opacity"
+          >
+            <p className="font-bold text-lg text-black">🏋️ Log Workout</p>
+            <p className="text-black/60 text-sm mt-0.5">Pick a day and time slot</p>
+          </button>
+
+          <button
+            onClick={() => router.push(`/goals?profile=${mode === 'guest' ? 'guest' : profileKey}`)}
+            className="w-full rounded-xl bg-[#1a1a1a] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
+          >
+            <p className="font-bold text-lg">🎯 Goals</p>
+            <p className="text-gray-400 text-sm mt-0.5">Track measurements & set targets</p>
+          </button>
+
+          <button
+            onClick={() => router.push('/history')}
+            className="w-full rounded-xl bg-[#1a1a1a] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
+          >
+            <p className="font-bold text-lg">📋 History</p>
+            <p className="text-gray-400 text-sm mt-0.5">View past workouts</p>
+          </button>
+        </div>
+      </main>
+    );
+  }
+
   // ── Workout setup screen ────────────────────────────────────────────────────
   return (
     <main className="flex flex-col min-h-dvh max-w-lg mx-auto px-4 py-6 gap-6">
       {/* Back + title only */}
       <div className="flex items-center gap-3">
-        <button onClick={() => { setMode(null); setSelectedDay(null); setTimeSlot(null); }} className="text-gray-400 text-sm active:text-white">
+        <button
+          onClick={() => {
+            setSelectedDay(null);
+            setTimeSlot(null);
+            setScreen(mode === 'jasmine' ? 'mode' : 'menu');
+          }}
+          className="text-gray-400 text-sm active:text-white"
+        >
           ← Back
         </button>
         <h2 className="font-bold text-lg">
@@ -184,7 +235,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Start button — immediately after time slots, no push to bottom */}
+      {/* Start button */}
       <button
         onClick={startWorkout}
         disabled={!timeSlot}
@@ -199,22 +250,6 @@ export default function Home() {
           ? `Start ${mode === 'jasmine' ? 'Day C' : `Day ${activeDay}`} · ${timeSlot} min`
           : 'Pick a time slot'}
       </button>
-
-      {/* History + Goals — centered at the bottom */}
-      <div className="mt-auto flex justify-center gap-6 pb-2">
-        <button
-          onClick={() => router.push('/history')}
-          className="text-sm text-gray-500 active:text-white underline underline-offset-2"
-        >
-          History
-        </button>
-        <button
-          onClick={() => router.push(`/goals?profile=${mode === 'guest' ? 'guest' : profileKey}`)}
-          className="text-sm text-gray-500 active:text-white underline underline-offset-2"
-        >
-          Goals
-        </button>
-      </div>
     </main>
   );
 }
