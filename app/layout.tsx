@@ -4,13 +4,13 @@ import AuthGate from "@/components/AuthGate";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
-  title: "Gym Tracker",
+  title: "JLord's Gym App",
   description: "JLord's personal gym tracker",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Gym Tracker",
+    title: "JLord's Gym App",
   },
 };
 

@@ -1,6 +1,6 @@
 {
-  "name": "Gym Tracker",
-  "short_name": "Gym",
+  "name": "JLord's Gym App",
+  "short_name": "JLord Gym",
   "description": "JLord's personal gym tracker",
   "start_url": "/",
   "display": "standalone",

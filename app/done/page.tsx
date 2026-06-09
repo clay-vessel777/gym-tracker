@@ -19,7 +19,7 @@ export default function DonePage() {
   function shareWorkout() {
     if (!session) return;
     const lines = [
-      `⚔️ Gym Tracker — Day ${session.day} (${session.timeSlot} min)`,
+      `💪 JLord's Gym App — Day ${session.day} (${session.timeSlot} min)`,
       `📅 ${new Date(session.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`,
       `⏱️ ${session.durationMinutes} min actual`,
       '',

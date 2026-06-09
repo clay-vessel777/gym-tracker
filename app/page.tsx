@@ -51,7 +51,7 @@ export default function Home() {
     return (
       <main className="flex flex-col min-h-dvh max-w-lg mx-auto px-4 py-6 gap-6">
         <div>
-          <h1 className="text-2xl font-bold">Gym Tracker {t.titleEmoji}</h1>
+          <h1 className="text-2xl font-bold">JLord's Gym App {t.titleEmoji}</h1>
           <p className="text-gray-400 text-sm mt-0.5">
             {sessionCount} session{sessionCount !== 1 ? 's' : ''} logged
           </p>
