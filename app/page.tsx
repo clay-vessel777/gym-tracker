@@ -142,7 +142,7 @@ export default function Home() {
             className="w-full rounded-xl bg-[var(--card-bg)] border border-gray-800 px-4 py-4 text-left active:bg-gray-800 transition-colors"
           >
             <p className="font-bold text-lg">{t.jlordEmoji} JLord Mode</p>
-            <p className="text-gray-400 text-sm mt-0.5">Full workout — tracks history & progression</p>
+            <p className="text-gray-400 text-sm mt-0.5">{t.jlordModeDesc}</p>
           </button>
 
           <button
@@ -157,8 +157,8 @@ export default function Home() {
             onClick={() => { setMode('guest'); setScreen('menu'); }}
             className="w-full rounded-xl bg-[var(--card-bg)] border border-gray-800 px-4 py-4 text-left active:bg-gray-800 transition-colors"
           >
-            <p className="font-bold text-lg">{t.guestEmoji} Guest / Debug Mode</p>
-            <p className="text-gray-400 text-sm mt-0.5">Full workout — nothing saved to history</p>
+            <p className="font-bold text-lg">{t.guestEmoji} {t.guestModeName}</p>
+            <p className="text-gray-400 text-sm mt-0.5">{t.guestModeDesc}</p>
           </button>
         </div>
 
@@ -195,24 +195,24 @@ export default function Home() {
             onClick={() => setScreen('setup')}
             className="w-full rounded-xl bg-[var(--card-bg)] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
           >
-            <p className="font-bold text-lg">{t.logWorkoutEmoji} Log Workout</p>
-            <p className="text-gray-400 text-sm mt-0.5">Pick a day and time slot</p>
+            <p className="font-bold text-lg">{t.logWorkoutEmoji} {t.logWorkoutLabel}</p>
+            <p className="text-gray-400 text-sm mt-0.5">{t.logWorkoutDesc}</p>
           </button>
 
           <button
             onClick={() => router.push(`/goals?profile=${mode === 'guest' ? 'guest' : profileKey}`)}
             className="w-full rounded-xl bg-[var(--card-bg)] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
           >
-            <p className="font-bold text-lg">🎯 Goals</p>
-            <p className="text-gray-400 text-sm mt-0.5">Track measurements & set targets</p>
+            <p className="font-bold text-lg">🎯 {t.goalsLabel}</p>
+            <p className="text-gray-400 text-sm mt-0.5">{t.goalsDesc}</p>
           </button>
 
           <button
             onClick={() => router.push('/history')}
             className="w-full rounded-xl bg-[var(--card-bg)] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
           >
-            <p className="font-bold text-lg">{t.historyEmoji} History</p>
-            <p className="text-gray-400 text-sm mt-0.5">View past workouts</p>
+            <p className="font-bold text-lg">{t.historyEmoji} {t.historyTitle}</p>
+            <p className="text-gray-400 text-sm mt-0.5">{t.historyDesc}</p>
           </button>
         </div>
       </main>

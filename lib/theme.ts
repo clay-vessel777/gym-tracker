@@ -28,6 +28,14 @@ export type ThemeText = {
   weeklyReminder: string;
   achievedLabel: string;
   btnRadius: string;
+  jlordModeDesc: string;
+  guestModeName: string;
+  guestModeDesc: string;
+  logWorkoutLabel: string;
+  logWorkoutDesc: string;
+  goalsLabel: string;
+  goalsDesc: string;
+  historyDesc: string;
   phaseBannerExtra: string;
   // emojis
   titleEmoji: string;
@@ -66,6 +74,14 @@ export const THEME_TEXT: Record<Theme, ThemeText> = {
     achievedLabel: 'Achieved 🎉',
     btnRadius: 'rounded-2xl',
     phaseBannerExtra: '',
+    jlordModeDesc: 'Full workout — tracks history & progression',
+    guestModeName: 'Guest / Debug Mode',
+    guestModeDesc: 'Full workout — nothing saved to history',
+    logWorkoutLabel: 'Log Workout',
+    logWorkoutDesc: 'Pick a day and time slot',
+    goalsLabel: 'Goals',
+    goalsDesc: 'Track measurements & set targets',
+    historyDesc: 'View past workouts',
     titleEmoji: '💪',
     jlordEmoji: '💪',
     jasmineEmoji: '💕',
@@ -79,7 +95,7 @@ export const THEME_TEXT: Record<Theme, ThemeText> = {
   },
   dungeon: {
     phases: {
-      1: { label: '⚔️ Apprentice', desc: 'Show up. Learn the battlefield. Build the habit.' },
+      1: { label: '⚔️ Apprentice', desc: 'Roll your stats. Learn the battlefield. Gain XP.' },
       2: { label: '🛡️ Warrior', desc: 'Full training. Build your power and consistency.' },
       3: { label: '👑 Champion', desc: 'Progressive overload. Push harder. Become legendary.' },
     },
@@ -100,6 +116,14 @@ export const THEME_TEXT: Record<Theme, ThemeText> = {
     achievedLabel: 'Achieved 🏆',
     btnRadius: 'rounded-lg',
     phaseBannerExtra: 'border-l-[3px] border-l-[#dc2626]',
+    jlordModeDesc: 'Gain XP. Suffer consequences.',
+    guestModeName: 'One Shot Mode',
+    guestModeDesc: 'Test a new character build.',
+    logWorkoutLabel: 'Begin Battle',
+    logWorkoutDesc: 'Roll for initiative',
+    goalsLabel: 'Character Development',
+    goalsDesc: 'Plan your build',
+    historyDesc: 'The songs they\'ll sing about you',
     titleEmoji: '⚔️',
     jlordEmoji: '⚔️',
     jasmineEmoji: '🌹',
