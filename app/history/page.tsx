@@ -26,7 +26,7 @@ export default function HistoryPage() {
 
       {sessions.length === 0 && (
         <div className="flex flex-col items-center justify-center flex-1 gap-3 text-center py-16">
-          <span className="text-5xl">📋</span>
+          <span className="text-5xl">📖</span>
           <p className="text-gray-400">No workouts logged yet.</p>
           <p className="text-gray-600 text-sm">Your history will appear here after your first session.</p>
         </div>
@@ -45,7 +45,7 @@ export default function HistoryPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-[#f5a623] font-bold">Day {session.day}</span>
-                    {session.jasmineMode && <span className="text-pink-400 text-xs">💕 Jasmine</span>}
+                    {session.jasmineMode && <span className="text-pink-400 text-xs">🌹 Jasmine</span>}
                     <span className="text-gray-500 text-xs">{session.timeSlot} min slot</span>
                   </div>
                   <div className="text-gray-400 text-xs mt-0.5">

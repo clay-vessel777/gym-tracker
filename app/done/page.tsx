@@ -17,7 +17,7 @@ export default function DonePage() {
   function shareWorkout() {
     if (!session) return;
     const lines = [
-      `💪 Gym Tracker — Day ${session.day} (${session.timeSlot} min)`,
+      `⚔️ Gym Tracker — Day ${session.day} (${session.timeSlot} min)`,
       `📅 ${new Date(session.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`,
       `⏱️ ${session.durationMinutes} min actual`,
       '',
@@ -36,9 +36,9 @@ export default function DonePage() {
 
   return (
     <main className="flex flex-col items-center justify-center min-h-dvh max-w-lg mx-auto px-4 py-6 gap-6 text-center">
-      <div className="text-7xl">🎉</div>
+      <div className="text-7xl">🏆</div>
       <div>
-        <h1 className="text-3xl font-bold">Workout Done!</h1>
+        <h1 className="text-3xl font-bold">Quest Complete!</h1>
         {session && (
           <p className="text-gray-400 mt-2">
             Day {session.day} · {session.durationMinutes} min · {session.exercises.length} exercises
@@ -65,7 +65,7 @@ export default function DonePage() {
           onClick={shareWorkout}
           className="w-full py-4 rounded-xl border border-gray-700 text-gray-300 font-medium active:bg-gray-800"
         >
-          Share / Export 📤
+          Share / Export 📜
         </button>
         <button
           onClick={() => router.push('/')}

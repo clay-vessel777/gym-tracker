@@ -98,6 +98,58 @@ export function daysSinceLastEntry(entries: GoalEntry[]): number | null {
   return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
 
+// ---- Goals (targets) ----
+
+export type GoalTarget = {
+  id: string;
+  profile: string;
+  measurementType: GoalMeasurementType;
+  startValue: number | null;
+  targetValue: number;
+  startDate: string;
+  targetDate: string;
+  note?: string;
+  achieved: boolean;
+};
+
+export async function saveGoalTarget(goal: Omit<GoalTarget, 'id' | 'achieved'>): Promise<void> {
+  await supabase.from('goals').insert({
+    id: `goal-${goal.profile}-${goal.measurementType}-${Date.now()}`,
+    profile: goal.profile,
+    measurement_type: goal.measurementType,
+    start_value: goal.startValue,
+    target_value: goal.targetValue,
+    start_date: goal.startDate,
+    target_date: goal.targetDate,
+    note: goal.note ?? null,
+    achieved: false,
+  });
+}
+
+export async function loadGoalTargets(profile: string): Promise<GoalTarget[]> {
+  const { data, error } = await supabase
+    .from('goals')
+    .select('*')
+    .eq('profile', profile)
+    .order('target_date', { ascending: true });
+  if (error || !data) return [];
+  return data.map(row => ({
+    id: row.id,
+    profile: row.profile,
+    measurementType: row.measurement_type as GoalMeasurementType,
+    startValue: row.start_value ? Number(row.start_value) : null,
+    targetValue: Number(row.target_value),
+    startDate: row.start_date,
+    targetDate: row.target_date,
+    note: row.note ?? undefined,
+    achieved: row.achieved,
+  }));
+}
+
+export async function markGoalAchieved(id: string): Promise<void> {
+  await supabase.from('goals').update({ achieved: true }).eq('id', id);
+}
+
 // ---- In-progress workout (localStorage only — session state) ----
 
 export type InProgressWorkout = {
@@ -161,32 +213,34 @@ export async function saveSession(session: WorkoutSession): Promise<void> {
   });
   setLastDay(session.day);
 
-  // 2. Sync to Supabase in background
-  try {
-    await supabase.from('workout_sessions').upsert({
-      id: session.id,
-      date: session.date,
-      day: session.day,
-      time_slot: session.timeSlot,
-      jasmine_mode: session.jasmineMode,
-      duration_minutes: session.durationMinutes,
-      exercises: session.exercises,
-    });
+  // 2. Sync to Supabase
+  const { error } = await supabase.from('workout_sessions').upsert({
+    id: session.id,
+    date: session.date,
+    day: session.day,
+    time_slot: session.timeSlot,
+    jasmine_mode: session.jasmineMode,
+    duration_minutes: session.durationMinutes,
+    exercises: session.exercises,
+  });
 
-    // Sync weights too
+  if (error) {
+    console.error('Supabase session save failed:', error);
+  } else {
+    // Sync weights only if session saved successfully
     const weightUpserts = session.exercises
       .filter(ex => ex.weightUsed > 0)
       .map(ex => ({ exercise_id: ex.id, weight: ex.weightUsed }));
     if (weightUpserts.length > 0) {
       await supabase.from('exercise_weights').upsert(weightUpserts);
     }
-  } catch (e) {
-    console.warn('Supabase sync failed (offline?), data saved locally', e);
   }
 }
 
-// Load sessions from Supabase and refresh local cache
+// Load sessions from Supabase, merge with localStorage, push any missing ones up
 export async function loadSessionsFromCloud(): Promise<WorkoutSession[]> {
+  const local = getLocalSessions();
+
   try {
     const { data, error } = await supabase
       .from('workout_sessions')
@@ -195,7 +249,7 @@ export async function loadSessionsFromCloud(): Promise<WorkoutSession[]> {
 
     if (error || !data) throw error;
 
-    const sessions: WorkoutSession[] = data.map(row => ({
+    const cloudSessions: WorkoutSession[] = data.map(row => ({
       id: row.id,
       date: row.date,
       day: row.day,
@@ -205,21 +259,29 @@ export async function loadSessionsFromCloud(): Promise<WorkoutSession[]> {
       exercises: row.exercises,
     }));
 
-    // Refresh local cache
-    setLocalSessions(sessions);
+    const cloudIds = new Set(cloudSessions.map(s => s.id));
 
-    // Refresh weight cache from latest sessions
-    sessions.forEach(s => s.exercises.forEach(ex => {
-      if (ex.weightUsed > 0) {
-        const current = getLocalWeight(ex.id);
-        if (current === null) setLocalWeight(ex.id, ex.weightUsed);
-      }
-    }));
+    // Push any local-only sessions up to Supabase
+    const localOnly = local.filter(s => !cloudIds.has(s.id));
+    if (localOnly.length > 0) {
+      await supabase.from('workout_sessions').upsert(
+        localOnly.map(s => ({
+          id: s.id, date: s.date, day: s.day,
+          time_slot: s.timeSlot, jasmine_mode: s.jasmineMode,
+          duration_minutes: s.durationMinutes, exercises: s.exercises,
+        }))
+      );
+    }
 
-    return sessions;
+    // Merge: cloud + any local-only, sorted by date desc
+    const merged = [...cloudSessions, ...localOnly]
+      .sort((a, b) => b.date.localeCompare(a.date));
+
+    setLocalSessions(merged);
+    return merged;
   } catch (e) {
     console.warn('Could not load from Supabase, using local cache', e);
-    return getLocalSessions();
+    return local;
   }
 }
 

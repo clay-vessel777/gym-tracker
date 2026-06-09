@@ -56,7 +56,7 @@ export default function Home() {
     return (
       <main className="flex flex-col min-h-dvh max-w-lg mx-auto px-4 py-6 gap-6">
         <div>
-          <h1 className="text-2xl font-bold">Gym Tracker 💪</h1>
+          <h1 className="text-2xl font-bold">Gym Tracker ⚔️</h1>
           <p className="text-gray-400 text-sm mt-0.5">
             {sessionCount} session{sessionCount !== 1 ? 's' : ''} logged
           </p>
@@ -68,7 +68,7 @@ export default function Home() {
             onClick={() => router.push('/workout?resume=1')}
             className="w-full rounded-xl bg-[#f5a623]/10 border border-[#f5a623]/40 px-4 py-3 text-left active:bg-[#f5a623]/20"
           >
-            <p className="text-[#f5a623] font-semibold text-sm">⚡ Workout in progress</p>
+            <p className="text-[#f5a623] font-semibold text-sm">🔥 Workout in progress</p>
             <p className="text-gray-400 text-xs mt-0.5">Tap to resume where you left off →</p>
           </button>
         )}
@@ -89,7 +89,7 @@ export default function Home() {
             onClick={() => { setMode('jlord'); setScreen('menu'); }}
             className="w-full rounded-xl bg-[#1a1a1a] border border-gray-800 px-4 py-4 text-left active:bg-gray-800 transition-colors"
           >
-            <p className="font-bold text-lg">💪 JLord Mode</p>
+            <p className="font-bold text-lg">⚔️ JLord Mode</p>
             <p className="text-gray-400 text-sm mt-0.5">Full workout — tracks history & progression</p>
           </button>
 
@@ -97,7 +97,7 @@ export default function Home() {
             onClick={() => { setMode('jasmine'); setScreen('setup'); }}
             className="w-full rounded-xl bg-[#1a1a1a] border border-gray-800 px-4 py-4 text-left active:bg-gray-800 transition-colors"
           >
-            <p className="font-bold text-lg">💕 Jasmine Mode</p>
+            <p className="font-bold text-lg">🌹 Jasmine Mode</p>
             <p className="text-gray-400 text-sm mt-0.5">Day C · simplified layout · couples session</p>
           </button>
 
@@ -105,7 +105,7 @@ export default function Home() {
             onClick={() => { setMode('guest'); setScreen('menu'); }}
             className="w-full rounded-xl bg-[#1a1a1a] border border-gray-800 px-4 py-4 text-left active:bg-gray-800 transition-colors"
           >
-            <p className="font-bold text-lg">👤 Guest / Debug Mode</p>
+            <p className="font-bold text-lg">🎭 Guest / Debug Mode</p>
             <p className="text-gray-400 text-sm mt-0.5">Full workout — nothing saved to history</p>
           </button>
         </div>
@@ -124,7 +124,7 @@ export default function Home() {
             ← Back
           </button>
           <h2 className="font-bold text-lg">
-            {mode === 'jlord' ? '💪 JLord Mode' : '👤 Guest Mode'}
+            {mode === 'jlord' ? '⚔️ JLord Mode' : '🎭 Guest Mode'}
           </h2>
         </div>
 
@@ -133,7 +133,7 @@ export default function Home() {
             onClick={() => setScreen('setup')}
             className="w-full rounded-xl bg-[#1a1a1a] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
           >
-            <p className="font-bold text-lg">🏋️ Log Workout</p>
+            <p className="font-bold text-lg">🗡️ Log Workout</p>
             <p className="text-gray-400 text-sm mt-0.5">Pick a day and time slot</p>
           </button>
 
@@ -141,7 +141,7 @@ export default function Home() {
             onClick={() => router.push(`/goals?profile=${mode === 'guest' ? 'guest' : profileKey}`)}
             className="w-full rounded-xl bg-[#1a1a1a] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
           >
-            <p className="font-bold text-lg">🎯 Goals</p>
+            <p className="font-bold text-lg">📜 Goals</p>
             <p className="text-gray-400 text-sm mt-0.5">Track measurements & set targets</p>
           </button>
 
@@ -149,7 +149,7 @@ export default function Home() {
             onClick={() => router.push('/history')}
             className="w-full rounded-xl bg-[#1a1a1a] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
           >
-            <p className="font-bold text-lg">📋 History</p>
+            <p className="font-bold text-lg">📖 History</p>
             <p className="text-gray-400 text-sm mt-0.5">View past workouts</p>
           </button>
         </div>
@@ -173,7 +173,7 @@ export default function Home() {
           ← Back
         </button>
         <h2 className="font-bold text-lg">
-          {mode === 'jlord' ? '💪 JLord Mode' : mode === 'jasmine' ? '💕 Jasmine Mode' : '👤 Guest Mode'}
+          {mode === 'jlord' ? '⚔️ JLord Mode' : mode === 'jasmine' ? '🌹 Jasmine Mode' : '🎭 Guest Mode'}
         </h2>
       </div>
 
