@@ -131,10 +131,10 @@ export default function Home() {
         <div className="flex flex-col gap-3">
           <button
             onClick={() => setScreen('setup')}
-            className="w-full rounded-xl bg-[#f5a623] px-4 py-5 text-left active:opacity-80 transition-opacity"
+            className="w-full rounded-xl bg-[#1a1a1a] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
           >
-            <p className="font-bold text-lg text-black">🏋️ Log Workout</p>
-            <p className="text-black/60 text-sm mt-0.5">Pick a day and time slot</p>
+            <p className="font-bold text-lg">🏋️ Log Workout</p>
+            <p className="text-gray-400 text-sm mt-0.5">Pick a day and time slot</p>
           </button>
 
           <button
