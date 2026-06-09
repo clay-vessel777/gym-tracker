@@ -53,19 +53,11 @@ export default function Home() {
   if (mode === null) {
     return (
       <main className="flex flex-col min-h-dvh max-w-lg mx-auto px-4 py-6 gap-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Gym Tracker 💪</h1>
-            <p className="text-gray-400 text-sm mt-0.5">
-              {sessionCount} session{sessionCount !== 1 ? 's' : ''} logged
-            </p>
-          </div>
-          <button
-            onClick={() => router.push('/history')}
-            className="text-sm text-gray-400 border border-gray-700 rounded-lg px-3 py-2 active:bg-gray-800"
-          >
-            History
-          </button>
+        <div>
+          <h1 className="text-2xl font-bold">Gym Tracker 💪</h1>
+          <p className="text-gray-400 text-sm mt-0.5">
+            {sessionCount} session{sessionCount !== 1 ? 's' : ''} logged
+          </p>
         </div>
 
         {/* Resume banner */}
@@ -124,31 +116,14 @@ export default function Home() {
   // ── Workout setup screen ────────────────────────────────────────────────────
   return (
     <main className="flex flex-col min-h-dvh max-w-lg mx-auto px-4 py-6 gap-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button onClick={() => { setMode(null); setSelectedDay(null); setTimeSlot(null); }} className="text-gray-400 text-sm active:text-white">
-            ← Back
-          </button>
-          <h2 className="font-bold text-lg">
-            {mode === 'jlord' ? '💪 JLord Mode' : mode === 'jasmine' ? '💕 Jasmine Mode' : '👤 Guest Mode'}
-          </h2>
-        </div>
-        <div className="flex gap-2">
-          {mode !== 'guest' && (
-            <button
-              onClick={() => router.push(`/goals?profile=${profileKey}`)}
-              className="text-sm text-gray-400 border border-gray-700 rounded-lg px-3 py-2 active:bg-gray-800"
-            >
-              Goals
-            </button>
-          )}
-          <button
-            onClick={() => router.push('/history')}
-            className="text-sm text-gray-400 border border-gray-700 rounded-lg px-3 py-2 active:bg-gray-800"
-          >
-            History
-          </button>
-        </div>
+      {/* Back + title only */}
+      <div className="flex items-center gap-3">
+        <button onClick={() => { setMode(null); setSelectedDay(null); setTimeSlot(null); }} className="text-gray-400 text-sm active:text-white">
+          ← Back
+        </button>
+        <h2 className="font-bold text-lg">
+          {mode === 'jlord' ? '💪 JLord Mode' : mode === 'jasmine' ? '💕 Jasmine Mode' : '👤 Guest Mode'}
+        </h2>
       </div>
 
       {/* Day selection — JLord and Guest only */}
@@ -160,7 +135,7 @@ export default function Home() {
               <button
                 key={day}
                 onClick={() => setSelectedDay(day)}
-                className={`rounded-xl py-4 text-center font-bold text-xl transition-all active:scale-95
+                className={`rounded-xl py-4 text-center font-bold text-base transition-all active:scale-95
                   ${activeDay === day
                     ? 'bg-[#f5a623] text-black'
                     : `bg-[#1a1a1a] text-white border ${day === nextDay ? 'border-[#f5a623]/50' : 'border-gray-800'}`
@@ -209,20 +184,35 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="mt-auto pt-4">
+      {/* Start button — immediately after time slots, no push to bottom */}
+      <button
+        onClick={startWorkout}
+        disabled={!timeSlot}
+        className={`w-full py-5 rounded-2xl text-xl font-bold transition-all active:scale-95
+          ${timeSlot
+            ? 'bg-[#f5a623] text-black shadow-lg'
+            : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+          }
+        `}
+      >
+        {timeSlot
+          ? `Start ${mode === 'jasmine' ? 'Day C' : `Day ${activeDay}`} · ${timeSlot} min`
+          : 'Pick a time slot'}
+      </button>
+
+      {/* History + Goals — centered at the bottom */}
+      <div className="mt-auto flex justify-center gap-6 pb-2">
         <button
-          onClick={startWorkout}
-          disabled={!timeSlot}
-          className={`w-full py-5 rounded-2xl text-xl font-bold transition-all active:scale-95
-            ${timeSlot
-              ? 'bg-[#f5a623] text-black shadow-lg'
-              : 'bg-gray-800 text-gray-500 cursor-not-allowed'
-            }
-          `}
+          onClick={() => router.push('/history')}
+          className="text-sm text-gray-500 active:text-white underline underline-offset-2"
         >
-          {timeSlot
-            ? `Start ${mode === 'jasmine' ? 'Day C' : `Day ${activeDay}`} · ${timeSlot} min`
-            : 'Pick a time slot'}
+          History
+        </button>
+        <button
+          onClick={() => router.push(`/goals?profile=${mode === 'guest' ? 'guest' : profileKey}`)}
+          className="text-sm text-gray-500 active:text-white underline underline-offset-2"
+        >
+          Goals
         </button>
       </div>
     </main>
