@@ -36,6 +36,8 @@ export type ThemeText = {
   goalsLabel: string;
   goalsDesc: string;
   historyDesc: string;
+  setLabel: string;
+  restLabel: string;
   phaseBannerExtra: string;
   // emojis
   titleEmoji: string;
@@ -82,6 +84,8 @@ export const THEME_TEXT: Record<Theme, ThemeText> = {
     goalsLabel: 'Goals',
     goalsDesc: 'Track measurements & set targets',
     historyDesc: 'View past workouts',
+    setLabel: 'Set',
+    restLabel: 'Rest',
     titleEmoji: '💪',
     jlordEmoji: '💪',
     jasmineEmoji: '💕',
@@ -100,12 +104,12 @@ export const THEME_TEXT: Record<Theme, ThemeText> = {
       3: { label: '👑 Champion', desc: 'Progressive overload. Push harder. Become legendary.' },
     },
     whoWorkingOut: 'Choose your adventurer',
-    workoutDay: 'Choose Your Trial',
+    workoutDay: 'Choose Your Encounter',
     nextUp: 'next quest',
-    timeQuestion: 'Time available for battle',
+    timeQuestion: 'Session Length',
     cardioTitle: 'Prepare for Battle',
     cardioCta: 'Enter the Dungeon →',
-    cooldownTitle: 'Rest at the Tavern',
+    cooldownTitle: 'Loot the Bodies',
     cooldownDesc: 'You fought well, adventurer.',
     finishCta: 'Complete the Quest ✓',
     historyTitle: 'Quest Log',
@@ -124,6 +128,8 @@ export const THEME_TEXT: Record<Theme, ThemeText> = {
     goalsLabel: 'Character Development',
     goalsDesc: 'Plan your build',
     historyDesc: 'The songs they\'ll sing about you',
+    setLabel: 'Turn',
+    restLabel: 'Take a short rest',
     titleEmoji: '⚔️',
     jlordEmoji: '⚔️',
     jasmineEmoji: '🌹',

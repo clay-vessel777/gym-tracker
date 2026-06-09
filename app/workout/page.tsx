@@ -258,11 +258,11 @@ function WorkoutInner() {
                       {done ? (
                         <div className="flex flex-col items-center gap-0.5">
                           <span className="text-xl">✓</span>
-                          <span className="text-xs font-normal opacity-70">Set {setNum}</span>
+                          <span className="text-xs font-normal opacity-70">{t.setLabel} {setNum}</span>
                         </div>
                       ) : (
                         <div className="flex flex-col items-center gap-0.5">
-                          <span className="text-lg">Set {setNum}</span>
+                          <span className="text-lg">{t.setLabel} {setNum}</span>
                           <span className={`text-xs font-normal ${isNext ? 'text-gray-300' : 'opacity-40'}`}>
                             {isNext ? 'tap when done' : ''}
                           </span>

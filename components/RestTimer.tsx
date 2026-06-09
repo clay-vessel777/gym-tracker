@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { getRestTime, setRestTime } from '@/lib/storage';
+import { useTheme } from '@/components/ThemeProvider';
 
 type Props = {
   onDismiss: () => void;
@@ -10,6 +11,7 @@ type Props = {
 const PRESETS = [30, 60, 90, 120, 180];
 
 export default function RestTimer({ onDismiss }: Props) {
+  const { t } = useTheme();
   const defaultTime = getRestTime();
   const [seconds, setSeconds] = useState(defaultTime);
   const [total, setTotal] = useState(defaultTime);
@@ -53,7 +55,7 @@ export default function RestTimer({ onDismiss }: Props) {
       className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center gap-6"
       onClick={() => { if (!showPresets) onDismiss(); }}
     >
-      <p className="text-gray-400 text-sm uppercase tracking-widest">Rest</p>
+      <p className="text-gray-400 text-sm uppercase tracking-widest">{t.restLabel}</p>
 
       <div className="relative" onClick={e => e.stopPropagation()}>
         <svg width="200" height="200" className="-rotate-90">
