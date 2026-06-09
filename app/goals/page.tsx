@@ -39,7 +39,7 @@ function GoalCard({
   const isClose = !isPast && daysLeft <= 14;
 
   return (
-    <div className={`rounded-xl bg-[#1a1a1a] border overflow-hidden ${goal.achieved ? 'border-green-700/50' : isClose ? 'border-[#f5a623]/40' : 'border-gray-800'}`}>
+    <div className={`rounded-xl bg-[#1c1916] border overflow-hidden ${goal.achieved ? 'border-green-700/50' : isClose ? 'border-[#dc2626]/40' : 'border-gray-800'}`}>
       <div className="px-4 py-3">
         <div className="flex items-start justify-between gap-2">
           <div>
@@ -51,7 +51,7 @@ function GoalCard({
                 ? <span className="text-green-400">Achieved ✓</span>
                 : isPast
                   ? <span className="text-red-400">Overdue by {Math.abs(daysLeft)}d</span>
-                  : <span className={isClose ? 'text-[#f5a623]' : 'text-gray-400'}>{daysLeft} days left</span>
+                  : <span className={isClose ? 'text-[#dc2626]' : 'text-gray-400'}>{daysLeft} days left</span>
               }
             </p>
           </div>
@@ -72,7 +72,7 @@ function GoalCard({
             </div>
             <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all ${goal.achieved ? 'bg-green-500' : 'bg-[#f5a623]'}`}
+                className={`h-full rounded-full transition-all ${goal.achieved ? 'bg-green-500' : 'bg-[#dc2626]'}`}
                 style={{ width: `${pct}%` }}
               />
             </div>
@@ -222,8 +222,8 @@ function GoalsInner() {
 
         {/* Weekly reminder */}
         {needsUpdate && (
-          <button onClick={() => setShowLog(true)} className="w-full rounded-xl bg-[#f5a623]/10 border border-[#f5a623]/50 px-4 py-3 text-left active:bg-[#f5a623]/20">
-            <p className="text-[#f5a623] font-semibold text-sm">🎲 Time for your weekly check-in!</p>
+          <button onClick={() => setShowLog(true)} className="w-full rounded-xl bg-[#dc2626]/10 border border-[#dc2626]/50 px-4 py-3 text-left active:bg-[#dc2626]/20">
+            <p className="text-[#dc2626] font-semibold text-sm">🎲 Time for your weekly check-in!</p>
             <p className="text-gray-400 text-xs mt-0.5">Last logged {daysSince} days ago — tap to update →</p>
           </button>
         )}
@@ -233,7 +233,7 @@ function GoalsInner() {
           <div>
             <p className="text-gray-400 text-xs uppercase tracking-widest mb-2">Active Goals</p>
             {activeGoals.length === 0 ? (
-              <div className="rounded-xl bg-[#1a1a1a] border border-gray-800 px-4 py-6 text-center">
+              <div className="rounded-xl bg-[#1c1916] border border-gray-800 px-4 py-6 text-center">
                 <p className="text-gray-500 text-sm">No active goals.</p>
                 <p className="text-gray-600 text-xs mt-1">Create one below to start tracking your progress.</p>
               </div>
@@ -250,13 +250,13 @@ function GoalsInner() {
         {/* Action buttons */}
         <button
           onClick={() => setShowCreate(true)}
-          className="w-full py-4 rounded-2xl bg-[#f5a623] text-black font-bold text-lg active:scale-95 transition-transform"
+          className="w-full py-4 rounded-2xl bg-[#dc2626] text-white font-bold text-lg active:scale-95 transition-transform"
         >
           + Create New Goal
         </button>
         <button
           onClick={() => setShowLog(true)}
-          className="w-full py-4 rounded-2xl bg-[#1a1a1a] border border-gray-700 text-white font-bold text-lg active:scale-95 transition-transform"
+          className="w-full py-4 rounded-2xl bg-[#1c1916] border border-gray-700 text-white font-bold text-lg active:scale-95 transition-transform"
         >
           Log Today's Numbers
         </button>
@@ -267,7 +267,7 @@ function GoalsInner() {
             <p className="text-gray-400 text-xs uppercase tracking-widest mb-2">Achieved 🏆</p>
             <div className="flex flex-col gap-2">
               {achievedGoals.map(g => (
-                <div key={g.id} className="rounded-xl bg-[#1a1a1a] border border-green-800/40 px-4 py-3 flex items-center justify-between">
+                <div key={g.id} className="rounded-xl bg-[#1c1916] border border-green-800/40 px-4 py-3 flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-300">{MEASUREMENT_LABELS[g.measurementType]}</p>
                     <p className="text-xs text-gray-500">{g.targetValue} {MEASUREMENT_UNITS[g.measurementType]}</p>
@@ -283,7 +283,7 @@ function GoalsInner() {
         {Object.keys(latest).length > 0 && (
           <div>
             <p className="text-gray-400 text-xs uppercase tracking-widest mb-2">Current Measurements</p>
-            <div className="rounded-xl bg-[#1a1a1a] border border-gray-800 divide-y divide-gray-800">
+            <div className="rounded-xl bg-[#1c1916] border border-gray-800 divide-y divide-gray-800">
               {ALL_METRICS.filter(m => latest[m]).map(m => (
                 <div key={m} className="flex items-center justify-between px-4 py-3">
                   <span className="text-sm text-gray-300">{MEASUREMENT_LABELS[m]}</span>
@@ -300,7 +300,7 @@ function GoalsInner() {
             <p className="text-gray-400 text-xs uppercase tracking-widest mb-2">Log History</p>
             <div className="flex flex-col gap-3">
               {sortedDates.map(date => (
-                <div key={date} className="rounded-xl bg-[#1a1a1a] border border-gray-800 overflow-hidden">
+                <div key={date} className="rounded-xl bg-[#1c1916] border border-gray-800 overflow-hidden">
                   <div className="px-4 py-2 border-b border-gray-800">
                     <p className="text-xs text-gray-400">
                       {new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
@@ -325,8 +325,8 @@ function GoalsInner() {
       {/* ── Create Goal sheet ── */}
       {showCreate && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/70" onClick={() => setShowCreate(false)}>
-          <div className="bg-[#1a1a1a] rounded-t-2xl overflow-y-auto max-h-[85dvh]" onClick={e => e.stopPropagation()}>
-            <div className="sticky top-0 bg-[#1a1a1a] px-4 pt-4 pb-3 border-b border-gray-800">
+          <div className="bg-[#1c1916] rounded-t-2xl overflow-y-auto max-h-[85dvh]" onClick={e => e.stopPropagation()}>
+            <div className="sticky top-0 bg-[#1c1916] px-4 pt-4 pb-3 border-b border-gray-800">
               <div className="w-10 h-1 bg-gray-700 rounded-full mx-auto mb-3" />
               <p className="font-bold text-base">Create New Goal</p>
               <p className="text-gray-500 text-xs mt-0.5">Set a target and a deadline.</p>
@@ -342,7 +342,7 @@ function GoalsInner() {
                       key={m}
                       onClick={() => setNewMetric(m)}
                       className={`py-2.5 px-3 rounded-xl text-sm text-left transition-all
-                        ${newMetric === m ? 'bg-[#f5a623] text-black font-semibold' : 'bg-gray-800 text-gray-300 border border-gray-700'}`}
+                        ${newMetric === m ? 'bg-[#dc2626] text-white font-semibold' : 'bg-gray-800 text-gray-300 border border-gray-700'}`}
                     >
                       {MEASUREMENT_LABELS[m]}
                       <span className={`text-xs ml-1 ${newMetric === m ? 'opacity-60' : 'text-gray-500'}`}>{MEASUREMENT_UNITS[m]}</span>
@@ -368,7 +368,7 @@ function GoalsInner() {
                 </div>
                 <div className="flex-1">
                   <p className="text-gray-400 text-xs mb-1.5">Target value</p>
-                  <div className="flex items-center gap-2 bg-gray-800 border border-gray-700 rounded-xl px-3 py-3 focus-within:border-[#f5a623]">
+                  <div className="flex items-center gap-2 bg-gray-800 border border-gray-700 rounded-xl px-3 py-3 focus-within:border-[#dc2626]">
                     <input
                       type="text" inputMode="decimal"
                       value={newTargetValue}
@@ -389,7 +389,7 @@ function GoalsInner() {
                   value={newTargetDate}
                   onChange={e => setNewTargetDate(e.target.value)}
                   min={new Date().toISOString().split('T')[0]}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-3 text-white text-sm outline-none focus:border-[#f5a623]"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-3 text-white text-sm outline-none focus:border-[#dc2626]"
                 />
               </div>
 
@@ -400,7 +400,7 @@ function GoalsInner() {
                   value={newNote}
                   onChange={e => setNewNote(e.target.value)}
                   placeholder="e.g. for the beach trip in August…"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-600 outline-none resize-none focus:border-[#f5a623]"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-600 outline-none resize-none focus:border-[#dc2626]"
                   rows={2}
                 />
               </div>
@@ -409,7 +409,7 @@ function GoalsInner() {
                 onClick={handleCreateGoal}
                 disabled={saving || !newTargetValue || !newTargetDate}
                 className={`w-full py-4 rounded-2xl font-bold text-lg transition-all active:scale-95 mb-4
-                  ${saving || !newTargetValue || !newTargetDate ? 'bg-gray-800 text-gray-500' : 'bg-[#f5a623] text-black'}`}
+                  ${saving || !newTargetValue || !newTargetDate ? 'bg-gray-800 text-gray-500' : 'bg-[#dc2626] text-white'}`}
               >
                 {saving ? 'Saving…' : 'Create Goal'}
               </button>
@@ -421,8 +421,8 @@ function GoalsInner() {
       {/* ── Log numbers sheet ── */}
       {showLog && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/70" onClick={() => setShowLog(false)}>
-          <div className="bg-[#1a1a1a] rounded-t-2xl overflow-y-auto max-h-[85dvh]" onClick={e => e.stopPropagation()}>
-            <div className="sticky top-0 bg-[#1a1a1a] px-4 pt-4 pb-3 border-b border-gray-800">
+          <div className="bg-[#1c1916] rounded-t-2xl overflow-y-auto max-h-[85dvh]" onClick={e => e.stopPropagation()}>
+            <div className="sticky top-0 bg-[#1c1916] px-4 pt-4 pb-3 border-b border-gray-800">
               <div className="w-10 h-1 bg-gray-700 rounded-full mx-auto mb-3" />
               <div className="flex items-center justify-between">
                 <p className="font-bold text-base">Log Progress</p>
@@ -441,7 +441,7 @@ function GoalsInner() {
                       value={logValues[m] ?? ''}
                       onChange={e => setLogValues(v => ({ ...v, [m]: e.target.value }))}
                       placeholder="—"
-                      className="w-20 text-right bg-gray-800 border border-gray-700 rounded-lg px-2 py-2 text-sm text-white outline-none focus:border-[#f5a623]"
+                      className="w-20 text-right bg-gray-800 border border-gray-700 rounded-lg px-2 py-2 text-sm text-white outline-none focus:border-[#dc2626]"
                     />
                     <span className="text-gray-500 text-xs w-6">{MEASUREMENT_UNITS[m]}</span>
                   </div>
@@ -451,14 +451,14 @@ function GoalsInner() {
                 <p className="text-gray-400 text-xs mb-1">Note (optional)</p>
                 <textarea value={logNote} onChange={e => setLogNote(e.target.value)}
                   placeholder="e.g. feeling stronger, clothes fitting better…"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 outline-none resize-none focus:border-[#f5a623]"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 outline-none resize-none focus:border-[#dc2626]"
                   rows={2} />
               </div>
               <button
                 onClick={handleSaveLog}
                 disabled={saving || Object.values(logValues).every(v => !v)}
                 className={`w-full py-4 rounded-2xl font-bold text-lg transition-all active:scale-95 mt-1 mb-4
-                  ${saving || Object.values(logValues).every(v => !v) ? 'bg-gray-800 text-gray-500' : 'bg-[#f5a623] text-black'}`}
+                  ${saving || Object.values(logValues).every(v => !v) ? 'bg-gray-800 text-gray-500' : 'bg-[#dc2626] text-white'}`}
               >
                 {saving ? 'Saving…' : 'Save Entry'}
               </button>

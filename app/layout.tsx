@@ -16,13 +16,13 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#111111",
+  themeColor: "#0d0b09",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="h-full">
-      <body className="min-h-full flex flex-col bg-[#111] text-white antialiased">
+      <body className="min-h-full flex flex-col bg-[#0d0b09] text-white antialiased">
         <AuthGate>{children}</AuthGate>
       </body>
     </html>

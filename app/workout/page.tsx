@@ -136,8 +136,8 @@ function WorkoutInner() {
           <div className="flex flex-col items-center gap-6 py-8">
             <div className="text-6xl">🐉</div>
             <div className="text-center">
-              <h2 className="text-2xl font-bold">Cardio Warmup</h2>
-              <p className="text-[#f5a623] text-4xl font-bold mt-2">{cardioMin} min</p>
+              <h2 className="text-2xl font-bold">Prepare for Battle</h2>
+              <p className="text-[#dc2626] text-4xl font-bold mt-2">{cardioMin} min</p>
               <p className="text-gray-400 text-sm mt-3">
                 Rowing machine (preferred) · Bike · Elliptical
               </p>
@@ -145,9 +145,9 @@ function WorkoutInner() {
             </div>
             <button
               onClick={() => setCurrentIdx(0)}
-              className="mt-6 w-full max-w-xs py-4 bg-[#f5a623] text-black font-bold rounded-2xl text-lg active:scale-95 transition-transform"
+              className="mt-6 w-full max-w-xs py-4 bg-[#dc2626] text-white font-bold rounded-lg text-lg active:scale-95 transition-transform"
             >
-              Cardio Done → Exercises
+              Enter the Dungeon →
             </button>
           </div>
         )}
@@ -160,14 +160,14 @@ function WorkoutInner() {
               {exerciseIds.map((_, i) => (
                 <div
                   key={i}
-                  className={`flex-1 h-1.5 rounded-full ${i < currentIdx ? 'bg-[#f5a623]' : i === currentIdx ? 'bg-[#f5a623]/60' : 'bg-gray-800'}`}
+                  className={`flex-1 h-1.5 rounded-full ${i < currentIdx ? 'bg-[#dc2626]' : i === currentIdx ? 'bg-[#dc2626]/60' : 'bg-gray-800'}`}
                 />
               ))}
             </div>
 
             {/* Exercise header */}
             <div>
-              <p className="text-[#f5a623] text-xs uppercase tracking-widest font-medium">
+              <p className="text-[#dc2626] text-xs uppercase tracking-widest font-medium">
                 {currentExercise.muscleGroup}
               </p>
               <div className="flex items-start justify-between gap-2 mt-1">
@@ -187,7 +187,7 @@ function WorkoutInner() {
             </div>
 
             {/* Weight */}
-            <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl px-4 py-3">
+            <div className="bg-[#1c1916] border border-gray-800 rounded-xl px-4 py-3">
               <p className="text-gray-400 text-xs mb-2">Weight (lbs)</p>
               <div className="flex items-center gap-3">
                 <button
@@ -217,7 +217,7 @@ function WorkoutInner() {
             </div>
 
             {/* Sets */}
-            <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl px-4 py-3">
+            <div className="bg-[#1c1916] border border-gray-800 rounded-xl px-4 py-3">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-gray-400 text-xs">Sets</p>
                 <p className="text-gray-500 text-xs">
@@ -236,7 +236,7 @@ function WorkoutInner() {
                       onClick={() => !done && completeSet(currentIdx)}
                       className={`flex-1 rounded-xl font-bold transition-all active:scale-95 py-4
                         ${done ? 'bg-green-500 text-white' : 'bg-gray-800 text-gray-400 border border-gray-700'}
-                        ${isNext ? 'ring-2 ring-[#f5a623]/60' : ''}
+                        ${isNext ? 'ring-2 ring-[#dc2626]/60' : ''}
                       `}
                     >
                       {done ? (
@@ -247,7 +247,7 @@ function WorkoutInner() {
                       ) : (
                         <div className="flex flex-col items-center gap-0.5">
                           <span className="text-lg">Set {setNum}</span>
-                          <span className={`text-xs font-normal ${isNext ? 'text-[#f5a623]' : 'opacity-40'}`}>
+                          <span className={`text-xs font-normal ${isNext ? 'text-[#dc2626]' : 'opacity-40'}`}>
                             {isNext ? 'tap when done' : ''}
                           </span>
                         </div>
@@ -260,7 +260,7 @@ function WorkoutInner() {
 
             {/* Notes */}
             {!jasmineMode && (
-              <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl px-4 py-3">
+              <div className="bg-[#1c1916] border border-gray-800 rounded-xl px-4 py-3">
                 <p className="text-gray-400 text-xs mb-2">Notes (optional)</p>
                 <textarea
                   value={currentLog.notes}
@@ -290,7 +290,7 @@ function WorkoutInner() {
                     setCurrentIdx(exerciseIds.length);
                   }
                 }}
-                className="flex-1 py-4 rounded-xl bg-[#f5a623] text-black font-bold text-lg active:scale-95 transition-transform"
+                className="flex-1 py-4 rounded-lg bg-[#dc2626] text-white font-bold text-lg active:scale-95 transition-transform"
               >
                 {currentIdx < exerciseIds.length - 1 ? 'Next Exercise →' : 'All Done →'}
               </button>
@@ -303,18 +303,18 @@ function WorkoutInner() {
           <div className="flex flex-col items-center gap-6 py-8">
             <div className="text-6xl">🧙</div>
             <div className="text-center">
-              <h2 className="text-2xl font-bold">Cooldown & Stretch</h2>
-              <p className="text-[#f5a623] text-4xl font-bold mt-2">{cooldownMin} min</p>
-              <p className="text-gray-400 text-sm mt-3">Take your time — you earned it.</p>
+              <h2 className="text-2xl font-bold">Rest at the Tavern</h2>
+              <p className="text-[#dc2626] text-4xl font-bold mt-2">{cooldownMin} min</p>
+              <p className="text-gray-400 text-sm mt-3">You fought well, adventurer.</p>
               {guestMode && (
                 <p className="text-gray-600 text-xs mt-2">Guest mode — this session won't be saved.</p>
               )}
             </div>
             <button
               onClick={finishWorkout}
-              className="mt-6 w-full max-w-xs py-4 bg-[#f5a623] text-black font-bold rounded-2xl text-lg active:scale-95 transition-transform"
+              className="mt-6 w-full max-w-xs py-4 bg-[#dc2626] text-white font-bold rounded-lg text-lg active:scale-95 transition-transform"
             >
-              {guestMode ? 'Done → Home' : 'Finish Workout ✓'}
+              {guestMode ? 'Done → Home' : 'Complete the Quest ✓'}
             </button>
           </div>
         )}
@@ -323,7 +323,7 @@ function WorkoutInner() {
       {/* Swap exercise bottom sheet */}
       {showSwap && currentLog && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/70" onClick={() => setShowSwap(false)}>
-          <div className="bg-[#1a1a1a] rounded-t-2xl p-4 pb-8" onClick={e => e.stopPropagation()}>
+          <div className="bg-[#1c1916] rounded-t-2xl p-4 pb-8" onClick={e => e.stopPropagation()}>
             <div className="w-10 h-1 bg-gray-700 rounded-full mx-auto mb-4" />
             <p className="text-gray-400 text-xs uppercase tracking-widest mb-3">Swap Exercise</p>
             <div className="flex flex-col gap-2">
@@ -337,12 +337,12 @@ function WorkoutInner() {
                     onClick={() => !isCurrent && swapExercise(altId)}
                     className={`w-full text-left px-4 py-3 rounded-xl transition-colors
                       ${isCurrent
-                        ? 'bg-[#f5a623]/10 border border-[#f5a623]/40 cursor-default'
+                        ? 'bg-[#dc2626]/10 border border-[#dc2626]/40 cursor-default'
                         : 'bg-gray-800/60 border border-gray-700 active:bg-gray-700'}
                     `}
                   >
                     <div className="flex items-center justify-between">
-                      <span className={`font-medium text-sm ${isCurrent ? 'text-[#f5a623]' : 'text-white'}`}>
+                      <span className={`font-medium text-sm ${isCurrent ? 'text-[#dc2626]' : 'text-white'}`}>
                         {alt.name} {isCurrent && '✓'}
                       </span>
                       {lastW !== null && (

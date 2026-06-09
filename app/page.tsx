@@ -9,9 +9,9 @@ type Mode = 'jlord' | 'jasmine' | 'guest' | null;
 type Screen = 'mode' | 'menu' | 'setup';
 
 const PHASE_INFO = {
-  1: { label: 'Phase 1', desc: 'Just show up. Cardio + 1–2 machines. Learn the space.' },
-  2: { label: 'Phase 2', desc: 'Full templates. Build consistency.' },
-  3: { label: 'Phase 3', desc: 'Progressive weight increases every 1–2 weeks.' },
+  1: { label: '⚔️ Apprentice', desc: 'Show up. Learn the battlefield. Build the habit.' },
+  2: { label: '🛡️ Warrior', desc: 'Full training. Build your power and consistency.' },
+  3: { label: '👑 Champion', desc: 'Progressive overload. Push harder. Become legendary.' },
 };
 
 export default function Home() {
@@ -66,28 +66,28 @@ export default function Home() {
         {inProgress && (
           <button
             onClick={() => router.push('/workout?resume=1')}
-            className="w-full rounded-xl bg-[#f5a623]/10 border border-[#f5a623]/40 px-4 py-3 text-left active:bg-[#f5a623]/20"
+            className="w-full rounded-xl bg-[#dc2626]/10 border border-[#dc2626]/40 px-4 py-3 text-left active:bg-[#dc2626]/20"
           >
-            <p className="text-[#f5a623] font-semibold text-sm">🔥 Workout in progress</p>
+            <p className="text-[#dc2626] font-semibold text-sm">🔥 Workout in progress</p>
             <p className="text-gray-400 text-xs mt-0.5">Tap to resume where you left off →</p>
           </button>
         )}
 
         {/* Phase banner */}
-        <div className="rounded-xl bg-[#1a1a1a] border border-gray-800 px-4 py-3">
+        <div className="rounded-xl bg-[#1c1916] border border-gray-800 border-l-[3px] border-l-[#dc2626] px-4 py-3">
           <div className="flex items-center gap-2">
-            <span className="text-[#f5a623] font-semibold text-sm">{PHASE_INFO[phase].label}</span>
+            <span className="text-[#dc2626] font-semibold text-sm">{PHASE_INFO[phase].label}</span>
             <span className="text-gray-500 text-xs">· {sessionCount} sessions logged</span>
           </div>
           <p className="text-gray-400 text-xs mt-1">{PHASE_INFO[phase].desc}</p>
         </div>
 
-        <p className="text-sm text-gray-400 -mb-2">Who's working out?</p>
+        <p className="text-sm text-gray-400 -mb-2">Choose your adventurer</p>
 
         <div className="flex flex-col gap-3">
           <button
             onClick={() => { setMode('jlord'); setScreen('menu'); }}
-            className="w-full rounded-xl bg-[#1a1a1a] border border-gray-800 px-4 py-4 text-left active:bg-gray-800 transition-colors"
+            className="w-full rounded-xl bg-[#1c1916] border border-gray-800 px-4 py-4 text-left active:bg-gray-800 transition-colors"
           >
             <p className="font-bold text-lg">⚔️ JLord Mode</p>
             <p className="text-gray-400 text-sm mt-0.5">Full workout — tracks history & progression</p>
@@ -95,7 +95,7 @@ export default function Home() {
 
           <button
             onClick={() => { setMode('jasmine'); setScreen('setup'); }}
-            className="w-full rounded-xl bg-[#1a1a1a] border border-gray-800 px-4 py-4 text-left active:bg-gray-800 transition-colors"
+            className="w-full rounded-xl bg-[#1c1916] border border-gray-800 px-4 py-4 text-left active:bg-gray-800 transition-colors"
           >
             <p className="font-bold text-lg">🌹 Jasmine Mode</p>
             <p className="text-gray-400 text-sm mt-0.5">Day C · simplified layout · couples session</p>
@@ -103,7 +103,7 @@ export default function Home() {
 
           <button
             onClick={() => { setMode('guest'); setScreen('menu'); }}
-            className="w-full rounded-xl bg-[#1a1a1a] border border-gray-800 px-4 py-4 text-left active:bg-gray-800 transition-colors"
+            className="w-full rounded-xl bg-[#1c1916] border border-gray-800 px-4 py-4 text-left active:bg-gray-800 transition-colors"
           >
             <p className="font-bold text-lg">🎭 Guest / Debug Mode</p>
             <p className="text-gray-400 text-sm mt-0.5">Full workout — nothing saved to history</p>
@@ -131,7 +131,7 @@ export default function Home() {
         <div className="flex flex-col gap-3">
           <button
             onClick={() => setScreen('setup')}
-            className="w-full rounded-xl bg-[#1a1a1a] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
+            className="w-full rounded-xl bg-[#1c1916] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
           >
             <p className="font-bold text-lg">🗡️ Log Workout</p>
             <p className="text-gray-400 text-sm mt-0.5">Pick a day and time slot</p>
@@ -139,7 +139,7 @@ export default function Home() {
 
           <button
             onClick={() => router.push(`/goals?profile=${mode === 'guest' ? 'guest' : profileKey}`)}
-            className="w-full rounded-xl bg-[#1a1a1a] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
+            className="w-full rounded-xl bg-[#1c1916] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
           >
             <p className="font-bold text-lg">🎯 Goals</p>
             <p className="text-gray-400 text-sm mt-0.5">Track measurements & set targets</p>
@@ -147,7 +147,7 @@ export default function Home() {
 
           <button
             onClick={() => router.push('/history')}
-            className="w-full rounded-xl bg-[#1a1a1a] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
+            className="w-full rounded-xl bg-[#1c1916] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
           >
             <p className="font-bold text-lg">📜 History</p>
             <p className="text-gray-400 text-sm mt-0.5">View past workouts</p>
@@ -180,7 +180,7 @@ export default function Home() {
       {/* Day selection — JLord and Guest only */}
       {mode !== 'jasmine' && (
         <div>
-          <p className="text-sm text-gray-400 mb-2">Workout Day</p>
+          <p className="text-sm text-gray-400 mb-2">Choose Your Trial</p>
           <div className="grid grid-cols-3 gap-2">
             {(['A', 'B', 'C'] as WorkoutDay[]).map(day => (
               <button
@@ -188,15 +188,15 @@ export default function Home() {
                 onClick={() => setSelectedDay(day)}
                 className={`rounded-xl py-4 text-center font-bold text-base transition-all active:scale-95
                   ${activeDay === day
-                    ? 'bg-[#f5a623] text-black'
-                    : `bg-[#1a1a1a] text-white border ${day === nextDay ? 'border-[#f5a623]/50' : 'border-gray-800'}`
+                    ? 'bg-[#dc2626] text-white'
+                    : `bg-[#1c1916] text-white border ${day === nextDay ? 'border-[#dc2626]/50' : 'border-gray-800'}`
                   }
                 `}
               >
                 Day {day}
                 {day === nextDay && (
-                  <div className={`text-xs font-normal mt-0.5 ${activeDay === day ? 'opacity-60' : 'text-[#f5a623] opacity-80'}`}>
-                    next up
+                  <div className={`text-xs font-normal mt-0.5 ${activeDay === day ? 'opacity-60' : 'text-[#dc2626] opacity-80'}`}>
+                    next quest
                   </div>
                 )}
               </button>
@@ -207,7 +207,7 @@ export default function Home() {
 
       {/* Jasmine: show fixed Day C label */}
       {mode === 'jasmine' && (
-        <div className="rounded-xl bg-[#1a1a1a] border border-gray-800 px-4 py-3">
+        <div className="rounded-xl bg-[#1c1916] border border-gray-800 px-4 py-3">
           <p className="text-gray-400 text-xs">Workout</p>
           <p className="font-bold mt-0.5">Day C — Couples session</p>
         </div>
@@ -215,7 +215,7 @@ export default function Home() {
 
       {/* Time slot */}
       <div>
-        <p className="text-sm text-gray-400 mb-2">How much time do you have?</p>
+        <p className="text-sm text-gray-400 mb-2">Time available for battle</p>
         <div className="grid grid-cols-3 gap-2">
           {([30, 45, 60] as TimeSlot[]).map(t => (
             <button
@@ -223,8 +223,8 @@ export default function Home() {
               onClick={() => setTimeSlot(t)}
               className={`rounded-xl py-4 text-center font-bold text-xl transition-all active:scale-95
                 ${timeSlot === t
-                  ? 'bg-[#f5a623] text-black'
-                  : 'bg-[#1a1a1a] border border-gray-800 text-white'
+                  ? 'bg-[#dc2626] text-white'
+                  : 'bg-[#1c1916] border border-gray-800 text-white'
                 }
               `}
             >
@@ -239,9 +239,9 @@ export default function Home() {
       <button
         onClick={startWorkout}
         disabled={!timeSlot}
-        className={`w-full py-5 rounded-2xl text-xl font-bold transition-all active:scale-95
+        className={`w-full py-5 rounded-lg text-xl font-bold transition-all active:scale-95
           ${timeSlot
-            ? 'bg-[#f5a623] text-black shadow-lg'
+            ? 'bg-[#dc2626] text-white shadow-lg'
             : 'bg-gray-800 text-gray-500 cursor-not-allowed'
           }
         `}

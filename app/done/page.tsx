@@ -47,7 +47,7 @@ export default function DonePage() {
       </div>
 
       {session && (
-        <div className="w-full bg-[#1a1a1a] border border-gray-800 rounded-xl divide-y divide-gray-800">
+        <div className="w-full bg-[#1c1916] border border-gray-800 rounded-xl divide-y divide-gray-800">
           {session.exercises.map(ex => (
             <div key={ex.id} className="flex items-center justify-between px-4 py-3 text-sm">
               <span className="text-gray-300">{ex.name}</span>
@@ -69,7 +69,7 @@ export default function DonePage() {
         </button>
         <button
           onClick={() => router.push('/')}
-          className="w-full py-4 rounded-2xl bg-[#f5a623] text-black font-bold text-lg active:scale-95 transition-transform"
+          className="w-full py-4 rounded-lg bg-[#dc2626] text-white font-bold text-lg active:scale-95 transition-transform"
         >
           Back Home
         </button>
