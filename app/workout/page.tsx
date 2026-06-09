@@ -182,7 +182,7 @@ function WorkoutInner() {
                 )}
               </div>
               {!jasmineMode && (
-                <p className="text-gray-400 text-sm mt-2 italic">"{currentExercise.formCue}"</p>
+                <p className="text-gray-400 text-sm mt-2 italic">{currentExercise.formCue}</p>
               )}
             </div>
 
