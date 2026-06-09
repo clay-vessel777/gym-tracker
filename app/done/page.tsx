@@ -38,7 +38,7 @@ export default function DonePage() {
 
   return (
     <main className="flex flex-col items-center justify-center min-h-dvh max-w-lg mx-auto px-4 py-6 gap-6 text-center">
-      <div className="text-7xl">🏆</div>
+      <div className="text-7xl">{t.doneEmoji}</div>
       <div>
         <h1 className="text-3xl font-bold">{t.doneTitle}</h1>
         {session && (

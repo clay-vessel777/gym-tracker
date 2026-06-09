@@ -51,7 +51,7 @@ export default function Home() {
     return (
       <main className="flex flex-col min-h-dvh max-w-lg mx-auto px-4 py-6 gap-6">
         <div>
-          <h1 className="text-2xl font-bold">Gym Tracker ⚔️</h1>
+          <h1 className="text-2xl font-bold">Gym Tracker {t.titleEmoji}</h1>
           <p className="text-gray-400 text-sm mt-0.5">
             {sessionCount} session{sessionCount !== 1 ? 's' : ''} logged
           </p>
@@ -64,7 +64,7 @@ export default function Home() {
             className="w-full rounded-xl border px-4 py-3 text-left"
             style={{ backgroundColor: 'var(--accent-10)', borderColor: 'var(--accent-40)' }}
           >
-            <p className="font-semibold text-sm" style={{ color: 'var(--accent)' }}>🔥 Workout in progress</p>
+            <p className="font-semibold text-sm" style={{ color: 'var(--accent)' }}>{t.inProgressEmoji} Workout in progress</p>
             <p className="text-gray-400 text-xs mt-0.5">Tap to resume where you left off →</p>
           </button>
         )}
@@ -85,7 +85,7 @@ export default function Home() {
             onClick={() => { setMode('jlord'); setScreen('menu'); }}
             className="w-full rounded-xl bg-[var(--card-bg)] border border-gray-800 px-4 py-4 text-left active:bg-gray-800 transition-colors"
           >
-            <p className="font-bold text-lg">⚔️ JLord Mode</p>
+            <p className="font-bold text-lg">{t.jlordEmoji} JLord Mode</p>
             <p className="text-gray-400 text-sm mt-0.5">Full workout — tracks history & progression</p>
           </button>
 
@@ -93,7 +93,7 @@ export default function Home() {
             onClick={() => { setMode('jasmine'); setScreen('setup'); }}
             className="w-full rounded-xl bg-[var(--card-bg)] border border-gray-800 px-4 py-4 text-left active:bg-gray-800 transition-colors"
           >
-            <p className="font-bold text-lg">🌹 Jasmine Mode</p>
+            <p className="font-bold text-lg">{t.jasmineEmoji} Jasmine Mode</p>
             <p className="text-gray-400 text-sm mt-0.5">Day C · simplified layout · couples session</p>
           </button>
 
@@ -101,7 +101,7 @@ export default function Home() {
             onClick={() => { setMode('guest'); setScreen('menu'); }}
             className="w-full rounded-xl bg-[var(--card-bg)] border border-gray-800 px-4 py-4 text-left active:bg-gray-800 transition-colors"
           >
-            <p className="font-bold text-lg">🎭 Guest / Debug Mode</p>
+            <p className="font-bold text-lg">{t.guestEmoji} Guest / Debug Mode</p>
             <p className="text-gray-400 text-sm mt-0.5">Full workout — nothing saved to history</p>
           </button>
         </div>
@@ -130,7 +130,7 @@ export default function Home() {
             ← Back
           </button>
           <h2 className="font-bold text-lg">
-            {mode === 'jlord' ? '⚔️ JLord Mode' : '🎭 Guest Mode'}
+            {mode === 'jlord' ? `${t.jlordEmoji} JLord Mode` : `${t.guestEmoji} Guest Mode`}
           </h2>
         </div>
 
@@ -139,7 +139,7 @@ export default function Home() {
             onClick={() => setScreen('setup')}
             className="w-full rounded-xl bg-[var(--card-bg)] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
           >
-            <p className="font-bold text-lg">🗡️ Log Workout</p>
+            <p className="font-bold text-lg">{t.logWorkoutEmoji} Log Workout</p>
             <p className="text-gray-400 text-sm mt-0.5">Pick a day and time slot</p>
           </button>
 
@@ -155,7 +155,7 @@ export default function Home() {
             onClick={() => router.push('/history')}
             className="w-full rounded-xl bg-[var(--card-bg)] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
           >
-            <p className="font-bold text-lg">📜 History</p>
+            <p className="font-bold text-lg">{t.historyEmoji} History</p>
             <p className="text-gray-400 text-sm mt-0.5">View past workouts</p>
           </button>
         </div>
@@ -178,7 +178,7 @@ export default function Home() {
           ← Back
         </button>
         <h2 className="font-bold text-lg">
-          {mode === 'jlord' ? '⚔️ JLord Mode' : mode === 'jasmine' ? '🌹 Jasmine Mode' : '🎭 Guest Mode'}
+          {mode === 'jlord' ? `${t.jlordEmoji} JLord Mode` : mode === 'jasmine' ? `${t.jasmineEmoji} Jasmine Mode` : `${t.guestEmoji} Guest Mode`}
         </h2>
       </div>
 

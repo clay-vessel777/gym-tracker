@@ -29,6 +29,17 @@ export type ThemeText = {
   achievedLabel: string;
   btnRadius: string;
   phaseBannerExtra: string;
+  // emojis
+  titleEmoji: string;
+  jlordEmoji: string;
+  jasmineEmoji: string;
+  guestEmoji: string;
+  logWorkoutEmoji: string;
+  historyEmoji: string;
+  cardioEmoji: string;
+  cooldownEmoji: string;
+  doneEmoji: string;
+  inProgressEmoji: string;
 };
 
 export const THEME_TEXT: Record<Theme, ThemeText> = {
@@ -55,6 +66,16 @@ export const THEME_TEXT: Record<Theme, ThemeText> = {
     achievedLabel: 'Achieved 🎉',
     btnRadius: 'rounded-2xl',
     phaseBannerExtra: '',
+    titleEmoji: '💪',
+    jlordEmoji: '💪',
+    jasmineEmoji: '💕',
+    guestEmoji: '👤',
+    logWorkoutEmoji: '🏋️',
+    historyEmoji: '📋',
+    cardioEmoji: '🚴',
+    cooldownEmoji: '🧘',
+    doneEmoji: '🎉',
+    inProgressEmoji: '⚡',
   },
   dungeon: {
     phases: {
@@ -79,5 +100,15 @@ export const THEME_TEXT: Record<Theme, ThemeText> = {
     achievedLabel: 'Achieved 🏆',
     btnRadius: 'rounded-lg',
     phaseBannerExtra: 'border-l-[3px] border-l-[#dc2626]',
+    titleEmoji: '⚔️',
+    jlordEmoji: '⚔️',
+    jasmineEmoji: '🌹',
+    guestEmoji: '🎭',
+    logWorkoutEmoji: '🗡️',
+    historyEmoji: '📜',
+    cardioEmoji: '🐉',
+    cooldownEmoji: '🧙',
+    doneEmoji: '🏆',
+    inProgressEmoji: '🔥',
   },
 };

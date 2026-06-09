@@ -123,8 +123,8 @@ function WorkoutInner() {
         </button>
         <span className="text-sm font-medium text-gray-300">
           Day {day} · {timeSlot} min
-          {jasmineMode ? ' 🌹' : ''}
-          {guestMode ? ' 🎭' : ''}
+          {jasmineMode ? ` ${t.jasmineEmoji}` : ''}
+          {guestMode ? ` ${t.guestEmoji}` : ''}
         </span>
         <span className="text-xs text-gray-500">
           {isCardio ? '0' : isDone ? exerciseIds.length : currentIdx + 1}/{exerciseIds.length}
@@ -136,7 +136,7 @@ function WorkoutInner() {
         {/* CARDIO SCREEN */}
         {isCardio && (
           <div className="flex flex-col items-center gap-6 py-8">
-            <div className="text-6xl">🐉</div>
+            <div className="text-6xl">{t.cardioEmoji}</div>
             <div className="text-center">
               <h2 className="text-2xl font-bold">{t.cardioTitle}</h2>
               <p className="text-[var(--accent)] text-4xl font-bold mt-2">{cardioMin} min</p>
@@ -303,7 +303,7 @@ function WorkoutInner() {
         {/* COOLDOWN / FINISH SCREEN */}
         {isDone && (
           <div className="flex flex-col items-center gap-6 py-8">
-            <div className="text-6xl">🧙</div>
+            <div className="text-6xl">{t.cooldownEmoji}</div>
             <div className="text-center">
               <h2 className="text-2xl font-bold">{t.cooldownTitle}</h2>
               <p className="text-[var(--accent)] text-4xl font-bold mt-2">{cooldownMin} min</p>
