@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getSessions } from '@/lib/storage';
+import { getSessions, loadSessionsFromCloud } from '@/lib/storage';
 import { WorkoutSession } from '@/lib/data';
 
 export default function HistoryPage() {
@@ -11,7 +11,8 @@ export default function HistoryPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
-    setSessions(getSessions());
+    setSessions(getSessions()); // show local cache immediately
+    loadSessionsFromCloud().then(setSessions); // then update from cloud
   }, []);
 
   return (
