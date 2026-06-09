@@ -4,18 +4,14 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { WorkoutDay, TimeSlot } from '@/lib/data';
 import { getNextDay, getCurrentPhase, getSessions, getInProgress, loadSessionsFromCloud, loadWeightsFromCloud } from '@/lib/storage';
+import { useTheme } from '@/components/ThemeProvider';
 
 type Mode = 'jlord' | 'jasmine' | 'guest' | null;
 type Screen = 'mode' | 'menu' | 'setup';
 
-const PHASE_INFO = {
-  1: { label: '⚔️ Apprentice', desc: 'Show up. Learn the battlefield. Build the habit.' },
-  2: { label: '🛡️ Warrior', desc: 'Full training. Build your power and consistency.' },
-  3: { label: '👑 Champion', desc: 'Progressive overload. Push harder. Become legendary.' },
-};
-
 export default function Home() {
   const router = useRouter();
+  const { theme, t, toggle } = useTheme();
   const [mode, setMode] = useState<Mode>(null);
   const [screen, setScreen] = useState<Screen>('mode');
   const [nextDay, setNextDay] = useState<WorkoutDay>('A');
@@ -30,7 +26,6 @@ export default function Home() {
     setPhase(getCurrentPhase());
     setSessionCount(getSessions().length);
     setInProgress(!!getInProgress());
-    // Sync from cloud in background — refreshes local cache silently
     Promise.all([loadSessionsFromCloud(), loadWeightsFromCloud()]).then(([sessions]) => {
       setSessionCount(sessions.length);
       setPhase(sessions.length < 7 ? 1 : sessions.length < 19 ? 2 : 3);
@@ -66,28 +61,29 @@ export default function Home() {
         {inProgress && (
           <button
             onClick={() => router.push('/workout?resume=1')}
-            className="w-full rounded-xl bg-[#dc2626]/10 border border-[#dc2626]/40 px-4 py-3 text-left active:bg-[#dc2626]/20"
+            className="w-full rounded-xl border px-4 py-3 text-left"
+            style={{ backgroundColor: 'var(--accent-10)', borderColor: 'var(--accent-40)' }}
           >
-            <p className="text-[#dc2626] font-semibold text-sm">🔥 Workout in progress</p>
+            <p className="font-semibold text-sm" style={{ color: 'var(--accent)' }}>🔥 Workout in progress</p>
             <p className="text-gray-400 text-xs mt-0.5">Tap to resume where you left off →</p>
           </button>
         )}
 
         {/* Phase banner */}
-        <div className="rounded-xl bg-[#1c1916] border border-gray-800 border-l-[3px] border-l-[#dc2626] px-4 py-3">
+        <div className={`rounded-xl bg-[var(--card-bg)] border border-gray-800 px-4 py-3 ${t.phaseBannerExtra}`}>
           <div className="flex items-center gap-2">
-            <span className="text-[#dc2626] font-semibold text-sm">{PHASE_INFO[phase].label}</span>
+            <span className="font-semibold text-sm" style={{ color: 'var(--accent)' }}>{t.phases[phase].label}</span>
             <span className="text-gray-500 text-xs">· {sessionCount} sessions logged</span>
           </div>
-          <p className="text-gray-400 text-xs mt-1">{PHASE_INFO[phase].desc}</p>
+          <p className="text-gray-400 text-xs mt-1">{t.phases[phase].desc}</p>
         </div>
 
-        <p className="text-sm text-gray-400 -mb-2">Choose your adventurer</p>
+        <p className="text-sm text-gray-400 -mb-2">{t.whoWorkingOut}</p>
 
         <div className="flex flex-col gap-3">
           <button
             onClick={() => { setMode('jlord'); setScreen('menu'); }}
-            className="w-full rounded-xl bg-[#1c1916] border border-gray-800 px-4 py-4 text-left active:bg-gray-800 transition-colors"
+            className="w-full rounded-xl bg-[var(--card-bg)] border border-gray-800 px-4 py-4 text-left active:bg-gray-800 transition-colors"
           >
             <p className="font-bold text-lg">⚔️ JLord Mode</p>
             <p className="text-gray-400 text-sm mt-0.5">Full workout — tracks history & progression</p>
@@ -95,7 +91,7 @@ export default function Home() {
 
           <button
             onClick={() => { setMode('jasmine'); setScreen('setup'); }}
-            className="w-full rounded-xl bg-[#1c1916] border border-gray-800 px-4 py-4 text-left active:bg-gray-800 transition-colors"
+            className="w-full rounded-xl bg-[var(--card-bg)] border border-gray-800 px-4 py-4 text-left active:bg-gray-800 transition-colors"
           >
             <p className="font-bold text-lg">🌹 Jasmine Mode</p>
             <p className="text-gray-400 text-sm mt-0.5">Day C · simplified layout · couples session</p>
@@ -103,10 +99,20 @@ export default function Home() {
 
           <button
             onClick={() => { setMode('guest'); setScreen('menu'); }}
-            className="w-full rounded-xl bg-[#1c1916] border border-gray-800 px-4 py-4 text-left active:bg-gray-800 transition-colors"
+            className="w-full rounded-xl bg-[var(--card-bg)] border border-gray-800 px-4 py-4 text-left active:bg-gray-800 transition-colors"
           >
             <p className="font-bold text-lg">🎭 Guest / Debug Mode</p>
             <p className="text-gray-400 text-sm mt-0.5">Full workout — nothing saved to history</p>
+          </button>
+        </div>
+
+        {/* Theme toggle */}
+        <div className="mt-auto flex justify-center pb-2">
+          <button
+            onClick={toggle}
+            className="text-xs text-gray-600 active:text-gray-400 underline underline-offset-2"
+          >
+            {theme === 'dungeon' ? 'Switch to Normal Mode' : '⚔️ Switch to Dungeon Mode'}
           </button>
         </div>
       </main>
@@ -131,7 +137,7 @@ export default function Home() {
         <div className="flex flex-col gap-3">
           <button
             onClick={() => setScreen('setup')}
-            className="w-full rounded-xl bg-[#1c1916] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
+            className="w-full rounded-xl bg-[var(--card-bg)] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
           >
             <p className="font-bold text-lg">🗡️ Log Workout</p>
             <p className="text-gray-400 text-sm mt-0.5">Pick a day and time slot</p>
@@ -139,7 +145,7 @@ export default function Home() {
 
           <button
             onClick={() => router.push(`/goals?profile=${mode === 'guest' ? 'guest' : profileKey}`)}
-            className="w-full rounded-xl bg-[#1c1916] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
+            className="w-full rounded-xl bg-[var(--card-bg)] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
           >
             <p className="font-bold text-lg">🎯 Goals</p>
             <p className="text-gray-400 text-sm mt-0.5">Track measurements & set targets</p>
@@ -147,7 +153,7 @@ export default function Home() {
 
           <button
             onClick={() => router.push('/history')}
-            className="w-full rounded-xl bg-[#1c1916] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
+            className="w-full rounded-xl bg-[var(--card-bg)] border border-gray-800 px-4 py-5 text-left active:bg-gray-800 transition-colors"
           >
             <p className="font-bold text-lg">📜 History</p>
             <p className="text-gray-400 text-sm mt-0.5">View past workouts</p>
@@ -160,7 +166,6 @@ export default function Home() {
   // ── Workout setup screen ────────────────────────────────────────────────────
   return (
     <main className="flex flex-col min-h-dvh max-w-lg mx-auto px-4 py-6 gap-6">
-      {/* Back + title only */}
       <div className="flex items-center gap-3">
         <button
           onClick={() => {
@@ -180,23 +185,25 @@ export default function Home() {
       {/* Day selection — JLord and Guest only */}
       {mode !== 'jasmine' && (
         <div>
-          <p className="text-sm text-gray-400 mb-2">Choose Your Trial</p>
+          <p className="text-sm text-gray-400 mb-2">{t.workoutDay}</p>
           <div className="grid grid-cols-3 gap-2">
             {(['A', 'B', 'C'] as WorkoutDay[]).map(day => (
               <button
                 key={day}
                 onClick={() => setSelectedDay(day)}
-                className={`rounded-xl py-4 text-center font-bold text-base transition-all active:scale-95
-                  ${activeDay === day
-                    ? 'bg-[#dc2626] text-white'
-                    : `bg-[#1c1916] text-white border ${day === nextDay ? 'border-[#dc2626]/50' : 'border-gray-800'}`
-                  }
-                `}
+                className="rounded-xl py-4 text-center font-bold text-base transition-all active:scale-95"
+                style={activeDay === day
+                  ? { backgroundColor: 'var(--accent)', color: 'white' }
+                  : { backgroundColor: 'var(--card-bg)', color: 'white', border: `1px solid ${day === nextDay ? 'var(--accent-50)' : '#374151'}` }
+                }
               >
                 Day {day}
                 {day === nextDay && (
-                  <div className={`text-xs font-normal mt-0.5 ${activeDay === day ? 'opacity-60' : 'text-[#dc2626] opacity-80'}`}>
-                    next quest
+                  <div className="text-xs font-normal mt-0.5" style={activeDay === day
+                    ? { opacity: 0.6 }
+                    : { color: 'var(--accent)', opacity: 0.8 }
+                  }>
+                    {t.nextUp}
                   </div>
                 )}
               </button>
@@ -207,7 +214,7 @@ export default function Home() {
 
       {/* Jasmine: show fixed Day C label */}
       {mode === 'jasmine' && (
-        <div className="rounded-xl bg-[#1c1916] border border-gray-800 px-4 py-3">
+        <div className="rounded-xl bg-[var(--card-bg)] border border-gray-800 px-4 py-3">
           <p className="text-gray-400 text-xs">Workout</p>
           <p className="font-bold mt-0.5">Day C — Couples session</p>
         </div>
@@ -215,21 +222,20 @@ export default function Home() {
 
       {/* Time slot */}
       <div>
-        <p className="text-sm text-gray-400 mb-2">Time available for battle</p>
+        <p className="text-sm text-gray-400 mb-2">{t.timeQuestion}</p>
         <div className="grid grid-cols-3 gap-2">
-          {([30, 45, 60] as TimeSlot[]).map(t => (
+          {([30, 45, 60] as TimeSlot[]).map(slot => (
             <button
-              key={t}
-              onClick={() => setTimeSlot(t)}
-              className={`rounded-xl py-4 text-center font-bold text-xl transition-all active:scale-95
-                ${timeSlot === t
-                  ? 'bg-[#dc2626] text-white'
-                  : 'bg-[#1c1916] border border-gray-800 text-white'
-                }
-              `}
+              key={slot}
+              onClick={() => setTimeSlot(slot)}
+              className="rounded-xl py-4 text-center font-bold text-xl transition-all active:scale-95"
+              style={timeSlot === slot
+                ? { backgroundColor: 'var(--accent)', color: 'white' }
+                : { backgroundColor: 'var(--card-bg)', color: 'white', border: '1px solid #374151' }
+              }
             >
-              {t}
-              <div className={`text-xs font-normal mt-0.5 ${timeSlot === t ? 'opacity-60' : 'opacity-50'}`}>min</div>
+              {slot}
+              <div className="text-xs font-normal mt-0.5" style={{ opacity: timeSlot === slot ? 0.6 : 0.5 }}>min</div>
             </button>
           ))}
         </div>
@@ -239,12 +245,11 @@ export default function Home() {
       <button
         onClick={startWorkout}
         disabled={!timeSlot}
-        className={`w-full py-5 rounded-lg text-xl font-bold transition-all active:scale-95
-          ${timeSlot
-            ? 'bg-[#dc2626] text-white shadow-lg'
-            : 'bg-gray-800 text-gray-500 cursor-not-allowed'
-          }
-        `}
+        className={`w-full py-5 ${t.btnRadius} text-xl font-bold transition-all active:scale-95`}
+        style={timeSlot
+          ? { backgroundColor: 'var(--accent)', color: 'white' }
+          : { backgroundColor: '#1f2937', color: '#6b7280', cursor: 'not-allowed' }
+        }
       >
         {timeSlot
           ? `Start ${mode === 'jasmine' ? 'Day C' : `Day ${activeDay}`} · ${timeSlot} min`

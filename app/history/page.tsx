@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSessions, loadSessionsFromCloud } from '@/lib/storage';
+import { useTheme } from '@/components/ThemeProvider';
 import { WorkoutSession } from '@/lib/data';
 
 export default function HistoryPage() {
   const router = useRouter();
+  const { t } = useTheme();
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -21,14 +23,14 @@ export default function HistoryPage() {
         <button onClick={() => router.back()} className="text-gray-400 text-sm active:text-white">
           ← Back
         </button>
-        <h1 className="text-xl font-bold">Quest Log</h1>
+        <h1 className="text-xl font-bold">{t.historyTitle}</h1>
       </div>
 
       {sessions.length === 0 && (
         <div className="flex flex-col items-center justify-center flex-1 gap-3 text-center py-16">
           <span className="text-5xl">📜</span>
-          <p className="text-gray-400">No quests recorded yet.</p>
-          <p className="text-gray-600 text-sm">Your adventures will appear here after your first session.</p>
+          <p className="text-gray-400">{t.historyEmpty}</p>
+          <p className="text-gray-600 text-sm">{t.historyEmptySub}</p>
         </div>
       )}
 
@@ -37,14 +39,14 @@ export default function HistoryPage() {
           const date = new Date(session.date);
           const isOpen = expanded === session.id;
           return (
-            <div key={session.id} className="bg-[#1c1916] border border-gray-800 rounded-xl overflow-hidden">
+            <div key={session.id} className="bg-[var(--card-bg)] border border-gray-800 rounded-xl overflow-hidden">
               <button
                 onClick={() => setExpanded(isOpen ? null : session.id)}
                 className="w-full flex items-center justify-between px-4 py-3 text-left active:bg-gray-800/50"
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[#dc2626] font-bold">Day {session.day}</span>
+                    <span className="text-[var(--accent)] font-bold">Day {session.day}</span>
                     {session.jasmineMode && <span className="text-pink-400 text-xs">🌹 Jasmine</span>}
                     <span className="text-gray-500 text-xs">{session.timeSlot} min slot</span>
                   </div>

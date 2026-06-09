@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import AuthGate from "@/components/AuthGate";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
   title: "Gym Tracker",
@@ -22,8 +23,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="h-full">
-      <body className="min-h-full flex flex-col bg-[#0d0b09] text-white antialiased">
-        <AuthGate>{children}</AuthGate>
+      <body className="min-h-full flex flex-col text-white antialiased">
+        <ThemeProvider>
+          <AuthGate>{children}</AuthGate>
+        </ThemeProvider>
       </body>
     </html>
   );

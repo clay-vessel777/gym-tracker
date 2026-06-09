@@ -1,19 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  --background: #111111;
-  --foreground: #ffffff;
   --accent: #f5a623;
+  --accent-10: rgba(245, 166, 35, 0.1);
+  --accent-20: rgba(245, 166, 35, 0.2);
+  --accent-40: rgba(245, 166, 35, 0.4);
+  --accent-50: rgba(245, 166, 35, 0.5);
+  --accent-60: rgba(245, 166, 35, 0.6);
+  --accent-80: rgba(245, 166, 35, 0.8);
+  --card-bg: #1a1a1a;
+  --body-bg: #111111;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-accent: var(--accent);
+html.dungeon {
+  --accent: #dc2626;
+  --accent-10: rgba(220, 38, 38, 0.1);
+  --accent-20: rgba(220, 38, 38, 0.2);
+  --accent-40: rgba(220, 38, 38, 0.4);
+  --accent-50: rgba(220, 38, 38, 0.5);
+  --accent-60: rgba(220, 38, 38, 0.6);
+  --accent-80: rgba(220, 38, 38, 0.8);
+  --card-bg: #1c1916;
+  --body-bg: #0d0b09;
 }
 
 body {
-  background: #111;
+  background: var(--body-bg);
   color: #fff;
   font-family: system-ui, -apple-system, sans-serif;
   -webkit-tap-highlight-color: transparent;
