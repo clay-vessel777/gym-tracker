@@ -50,6 +50,23 @@ export type GoalEntry = {
   note?: string;
 };
 
+const GOAL_LOG_DATE_KEY = 'gym_last_goal_log';
+
+function cacheGoalLogDate(date: string): void {
+  if (typeof window !== 'undefined') localStorage.setItem(GOAL_LOG_DATE_KEY, date);
+}
+
+export function getLastGoalLogDate(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(GOAL_LOG_DATE_KEY);
+}
+
+export function getDaysSinceLastGoalLog(): number | null {
+  const last = getLastGoalLogDate();
+  if (!last) return null;
+  return Math.floor((Date.now() - new Date(last + 'T12:00:00').getTime()) / (1000 * 60 * 60 * 24));
+}
+
 export async function saveGoalEntries(entries: Omit<GoalEntry, 'id'>[], profile: string): Promise<void> {
   const rows = entries.map(e => ({
     id: `${profile}-${e.measurementType}-${e.date}-${Date.now()}`,
@@ -62,6 +79,9 @@ export async function saveGoalEntries(entries: Omit<GoalEntry, 'id'>[], profile:
     note: e.note ?? null,
   }));
   await supabase.from('goal_entries').insert(rows);
+  // Cache the latest log date so the home screen can read it without Supabase
+  const dates = entries.map(e => e.date).sort();
+  if (dates.length > 0) cacheGoalLogDate(dates[dates.length - 1]);
 }
 
 export async function loadGoalEntries(profile: string): Promise<GoalEntry[]> {
@@ -148,6 +168,86 @@ export async function loadGoalTargets(profile: string): Promise<GoalTarget[]> {
 
 export async function markGoalAchieved(id: string): Promise<void> {
   await supabase.from('goals').update({ achieved: true }).eq('id', id);
+}
+
+export async function updateGoalTarget(id: string, patch: {
+  targetValue?: number;
+  targetDate?: string;
+  startValue?: number | null;
+  note?: string;
+}): Promise<void> {
+  const update: Record<string, unknown> = {};
+  if (patch.targetValue !== undefined) update.target_value = patch.targetValue;
+  if (patch.targetDate !== undefined) update.target_date = patch.targetDate;
+  if ('startValue' in patch) update.start_value = patch.startValue ?? null;
+  if ('note' in patch) update.note = patch.note ?? null;
+  await supabase.from('goals').update(update).eq('id', id);
+}
+
+export async function deleteGoalTarget(id: string): Promise<void> {
+  await supabase.from('goals').delete().eq('id', id);
+}
+
+// ---- Activity goals (localStorage — derived from session data, no Supabase schema needed) ----
+
+export type ActivityGoalType = 'workout_count' | 'streak';
+
+export type ActivityGoal = {
+  id: string;
+  type: ActivityGoalType;
+  targetValue: number;
+  startDate: string;
+  targetDate: string;
+  note?: string;
+  achieved: boolean;
+};
+
+const ACTIVITY_GOALS_KEY = 'gym_activity_goals';
+
+export function getActivityGoals(): ActivityGoal[] {
+  if (typeof window === 'undefined') return [];
+  try { return JSON.parse(localStorage.getItem(ACTIVITY_GOALS_KEY) || '[]'); }
+  catch { return []; }
+}
+
+export function saveActivityGoal(goal: ActivityGoal): void {
+  const goals = getActivityGoals().filter(g => g.id !== goal.id);
+  localStorage.setItem(ACTIVITY_GOALS_KEY, JSON.stringify([...goals, goal]));
+}
+
+export function deleteActivityGoal(id: string): void {
+  const goals = getActivityGoals().filter(g => g.id !== id);
+  localStorage.setItem(ACTIVITY_GOALS_KEY, JSON.stringify(goals));
+}
+
+export function getActivityGoalProgress(goal: ActivityGoal): { current: number; pct: number } {
+  let current = 0;
+  if (goal.type === 'workout_count') {
+    current = getLocalSessions().filter(s => s.date >= goal.startDate).length;
+  } else {
+    current = getWorkoutStreak();
+  }
+  return { current, pct: Math.min(100, Math.round((current / goal.targetValue) * 100)) };
+}
+
+// ---- Milestone tracking ----
+
+const MILESTONES_KEY = 'gym_milestones_seen';
+
+export function getSeenMilestones(goalId: string): number[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const map = JSON.parse(localStorage.getItem(MILESTONES_KEY) || '{}');
+    return map[goalId] ?? [];
+  } catch { return []; }
+}
+
+export function setMilestoneSeen(goalId: string, threshold: number): void {
+  try {
+    const map = JSON.parse(localStorage.getItem(MILESTONES_KEY) || '{}');
+    map[goalId] = [...new Set([...(map[goalId] ?? []), threshold])];
+    localStorage.setItem(MILESTONES_KEY, JSON.stringify(map));
+  } catch { /* ignore */ }
 }
 
 // ---- In-progress workout (localStorage only — session state) ----

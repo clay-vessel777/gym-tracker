@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { WorkoutDay, TimeSlot } from '@/lib/data';
-import { getNextDay, getCurrentPhase, getSessions, getInProgress, clearInProgress, loadSessionsFromCloud, loadWeightsFromCloud, getWorkoutStreak, getDaysSinceLastWorkout, getWeeklyStats, WeeklyStats } from '@/lib/storage';
+import { getNextDay, getCurrentPhase, getSessions, getInProgress, clearInProgress, loadSessionsFromCloud, loadWeightsFromCloud, getWorkoutStreak, getDaysSinceLastWorkout, getWeeklyStats, WeeklyStats, getDaysSinceLastGoalLog } from '@/lib/storage';
 import { useTheme } from '@/components/ThemeProvider';
 
 type Mode = 'jlord' | 'jasmine' | 'guest' | null;
@@ -23,6 +23,7 @@ export default function Home() {
   const [streak, setStreak] = useState(0);
   const [daysSince, setDaysSince] = useState<number | null>(null);
   const [weeklyStats, setWeeklyStats] = useState<WeeklyStats>({ workouts: 0, totalVolume: 0, prs: 0 });
+  const [measurementDaysSince, setMeasurementDaysSince] = useState<number | null>(null);
 
   useEffect(() => {
     setNextDay(getNextDay());
@@ -32,6 +33,7 @@ export default function Home() {
     setStreak(getWorkoutStreak());
     setDaysSince(getDaysSinceLastWorkout());
     setWeeklyStats(getWeeklyStats());
+    setMeasurementDaysSince(getDaysSinceLastGoalLog());
     Promise.all([loadSessionsFromCloud(), loadWeightsFromCloud()]).then(([sessions]) => {
       setSessionCount(sessions.length);
       setPhase(sessions.length < 7 ? 1 : sessions.length < 19 ? 2 : 3);
@@ -74,6 +76,17 @@ export default function Home() {
             </p>
             <p className="text-gray-500 text-xs mt-0.5">Time to get back in the dungeon.</p>
           </div>
+        )}
+
+        {/* Measurement check-in nudge */}
+        {measurementDaysSince !== null && measurementDaysSince >= 7 && (
+          <button
+            onClick={() => router.push('/goals?profile=jlord')}
+            className="w-full rounded-xl border border-gray-700 px-4 py-3 text-left bg-gray-900/40 active:bg-gray-800/60"
+          >
+            <p className="text-gray-300 text-sm font-medium">📏 Measurements due</p>
+            <p className="text-gray-500 text-xs mt-0.5">Last logged {measurementDaysSince} days ago → tap to update</p>
+          </button>
         )}
 
         {/* Resume banner */}

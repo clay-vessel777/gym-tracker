@@ -5,7 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
   GoalEntry, GoalTarget, GoalMeasurementType, MEASUREMENT_LABELS, MEASUREMENT_UNITS,
   loadGoalEntries, saveGoalEntries, getLatestValues, daysSinceLastEntry,
-  loadGoalTargets, saveGoalTarget, markGoalAchieved,
+  loadGoalTargets, saveGoalTarget, markGoalAchieved, updateGoalTarget, deleteGoalTarget,
+  ActivityGoal, ActivityGoalType, getActivityGoals, saveActivityGoal, deleteActivityGoal, getActivityGoalProgress,
+  getSeenMilestones, setMilestoneSeen,
 } from '@/lib/storage';
 import Sparkline from '@/components/Sparkline';
 
@@ -14,12 +16,65 @@ const ALL_METRICS: GoalMeasurementType[] = [
   'thigh', 'neck', 'shoulders', 'calf',
 ];
 
+const MILESTONE_THRESHOLDS = [25, 50, 75, 100];
+
+function milestoneEmoji(pct: number) {
+  if (pct >= 100) return '🏆';
+  if (pct >= 75) return '🔥';
+  if (pct >= 50) return '💪';
+  return '🌱';
+}
+
+function milestoneLabel(pct: number) {
+  if (pct >= 100) return 'Goal achieved!';
+  return `${pct}% of the way there!`;
+}
+
+// ── Milestone celebration overlay ─────────────────────────────────────────────
+
+function MilestoneCelebration({
+  goalName, pct, onDismiss,
+}: { goalName: string; pct: number; onDismiss: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6" onClick={onDismiss}>
+      <div
+        className="w-full max-w-sm rounded-2xl border text-center px-6 py-8 flex flex-col items-center gap-4"
+        style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--accent-40)' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="text-7xl">{milestoneEmoji(pct)}</div>
+        <div>
+          <p className="text-2xl font-bold">{milestoneLabel(pct)}</p>
+          <p className="text-gray-400 text-sm mt-1">{goalName}</p>
+        </div>
+        <div className="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full"
+            style={{ width: `${pct}%`, backgroundColor: 'var(--accent)' }}
+          />
+        </div>
+        <button
+          onClick={onDismiss}
+          className="w-full py-3 rounded-xl font-bold text-white"
+          style={{ backgroundColor: 'var(--accent)' }}
+        >
+          Keep going!
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Measurement goal card ─────────────────────────────────────────────────────
+
 function GoalCard({
-  goal, latest, onAchieved, isGuest,
+  goal, latest, onAchieved, onEdit, onDelete, isGuest,
 }: {
   goal: GoalTarget;
   latest: Partial<Record<GoalMeasurementType, GoalEntry>>;
   onAchieved: (id: string) => void;
+  onEdit: (goal: GoalTarget) => void;
+  onDelete: (id: string) => void;
   isGuest: boolean;
 }) {
   const unit = MEASUREMENT_UNITS[goal.measurementType];
@@ -28,13 +83,11 @@ function GoalCard({
   const start = goal.startValue;
   const target = goal.targetValue;
 
-  // Progress: how far from start to target (handles both gain and loss)
   let pct = 0;
   if (start !== null && current !== null && start !== target) {
     pct = Math.min(100, Math.max(0, ((current - start) / (target - start)) * 100));
   }
 
-  const today = new Date().toISOString().split('T')[0];
   const daysLeft = Math.ceil((new Date(goal.targetDate + 'T12:00:00').getTime() - Date.now()) / 86400000);
   const isPast = daysLeft < 0;
   const isClose = !isPast && daysLeft <= 14;
@@ -64,7 +117,6 @@ function GoalCard({
           )}
         </div>
 
-        {/* Progress bar */}
         {start !== null && current !== null && (
           <div className="mt-3">
             <div className="flex justify-between text-xs text-gray-600 mb-1">
@@ -82,19 +134,106 @@ function GoalCard({
 
         {goal.note && <p className="text-gray-600 text-xs mt-2 italic">{goal.note}</p>}
 
-        {/* Achieve button */}
         {!goal.achieved && !isGuest && (
-          <button
-            onClick={() => onAchieved(goal.id)}
-            className="mt-3 text-xs text-gray-500 border border-gray-700 rounded-lg px-3 py-1.5 active:bg-gray-800"
-          >
-            Mark as Achieved ✓
-          </button>
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={() => onAchieved(goal.id)}
+              className="text-xs text-gray-500 border border-gray-700 rounded-lg px-3 py-1.5 active:bg-gray-800"
+            >
+              Mark Achieved ✓
+            </button>
+            <button
+              onClick={() => onEdit(goal)}
+              className="text-xs text-gray-500 border border-gray-700 rounded-lg px-3 py-1.5 active:bg-gray-800"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => {
+                if (confirm('Delete this goal?')) onDelete(goal.id);
+              }}
+              className="text-xs text-red-800 border border-red-900/40 rounded-lg px-3 py-1.5 active:bg-red-900/20"
+            >
+              Delete
+            </button>
+          </div>
         )}
       </div>
     </div>
   );
 }
+
+// ── Activity goal card ────────────────────────────────────────────────────────
+
+const ACTIVITY_LABELS: Record<ActivityGoalType, string> = {
+  workout_count: 'Total Workouts',
+  streak: 'Week Streak',
+};
+
+const ACTIVITY_UNITS: Record<ActivityGoalType, string> = {
+  workout_count: 'workouts',
+  streak: 'weeks',
+};
+
+function ActivityGoalCard({
+  goal, onDelete,
+}: { goal: ActivityGoal; onDelete: (id: string) => void }) {
+  const { current, pct } = getActivityGoalProgress(goal);
+  const daysLeft = Math.ceil((new Date(goal.targetDate + 'T12:00:00').getTime() - Date.now()) / 86400000);
+  const isPast = daysLeft < 0;
+  const isClose = !isPast && daysLeft <= 14;
+  const unit = ACTIVITY_UNITS[goal.type];
+
+  return (
+    <div className={`rounded-xl bg-[var(--card-bg)] border overflow-hidden ${goal.achieved ? 'border-green-700/50' : isClose ? 'border-[var(--accent)]' : 'border-gray-800'}`}>
+      <div className="px-4 py-3">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <p className="font-semibold text-sm">{ACTIVITY_LABELS[goal.type]}</p>
+            <p className="text-gray-500 text-xs mt-0.5">
+              Target: <span className="text-white font-medium">{goal.targetValue} {unit}</span>
+              {' · '}
+              {goal.achieved
+                ? <span className="text-green-400">Achieved ✓</span>
+                : isPast
+                  ? <span className="text-red-400">Overdue by {Math.abs(daysLeft)}d</span>
+                  : <span className={isClose ? 'text-[var(--accent)]' : 'text-gray-400'}>{daysLeft} days left</span>
+              }
+            </p>
+          </div>
+          <div className="text-right flex-shrink-0">
+            <p className="text-lg font-bold">{current}</p>
+            <p className="text-gray-500 text-xs">{unit}</p>
+          </div>
+        </div>
+
+        <div className="mt-3">
+          <div className="flex justify-between text-xs text-gray-600 mb-1">
+            <span>0 {unit}</span>
+            <span>{pct}%</span>
+          </div>
+          <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${goal.achieved ? 'bg-green-500' : 'bg-[var(--accent)]'}`}
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        </div>
+
+        {goal.note && <p className="text-gray-600 text-xs mt-2 italic">{goal.note}</p>}
+
+        <button
+          onClick={() => { if (confirm('Delete this goal?')) onDelete(goal.id); }}
+          className="mt-3 text-xs text-red-800 border border-red-900/40 rounded-lg px-3 py-1.5 active:bg-red-900/20"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
 
 function GoalsInner() {
   const router = useRouter();
@@ -106,11 +245,15 @@ function GoalsInner() {
   const [entries, setEntries] = useState<GoalEntry[]>([]);
   const [latest, setLatest] = useState<Partial<Record<GoalMeasurementType, GoalEntry>>>({});
   const [goalTargets, setGoalTargets] = useState<GoalTarget[]>([]);
+  const [activityGoals, setActivityGoals] = useState<ActivityGoal[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [showLog, setShowLog] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Milestone celebration
+  const [celebration, setCelebration] = useState<{ goalId: string; goalName: string; pct: number } | null>(null);
 
   // Log form
   const [logValues, setLogValues] = useState<Partial<Record<GoalMeasurementType, string>>>({});
@@ -118,11 +261,21 @@ function GoalsInner() {
   const [logDate, setLogDate] = useState(() => new Date().toISOString().split('T')[0]);
 
   // Create goal form
+  const [createTab, setCreateTab] = useState<'measurement' | 'activity'>('measurement');
   const [newMetric, setNewMetric] = useState<GoalMeasurementType>('weight');
   const [newStartValue, setNewStartValue] = useState('');
   const [newTargetValue, setNewTargetValue] = useState('');
   const [newTargetDate, setNewTargetDate] = useState('');
   const [newNote, setNewNote] = useState('');
+  const [newActivityType, setNewActivityType] = useState<ActivityGoalType>('workout_count');
+  const [newActivityTarget, setNewActivityTarget] = useState('');
+
+  // Edit goal
+  const [editingGoal, setEditingGoal] = useState<GoalTarget | null>(null);
+  const [editTargetValue, setEditTargetValue] = useState('');
+  const [editTargetDate, setEditTargetDate] = useState('');
+  const [editStartValue, setEditStartValue] = useState('');
+  const [editNote, setEditNote] = useState('');
 
   useEffect(() => {
     if (isGuest) { setLoading(false); return; }
@@ -130,9 +283,32 @@ function GoalsInner() {
       setEntries(e);
       setLatest(getLatestValues(e));
       setGoalTargets(g);
+      setActivityGoals(getActivityGoals().filter(ag => !isGuest));
       setLoading(false);
     });
   }, [profile, isGuest]);
+
+  // Check for newly crossed milestones after data loads
+  useEffect(() => {
+    if (loading || celebration) return;
+    const activeGoals = goalTargets.filter(g => !g.achieved);
+    for (const goal of activeGoals) {
+      if (goal.startValue === null) continue;
+      const current = latest[goal.measurementType]?.value ?? goal.startValue;
+      const start = goal.startValue;
+      const target = goal.targetValue;
+      if (start === target) continue;
+      const pct = Math.min(100, Math.max(0, ((current - start) / (target - start)) * 100));
+      const seen = getSeenMilestones(goal.id);
+      for (const threshold of MILESTONE_THRESHOLDS) {
+        if (pct >= threshold && !seen.includes(threshold)) {
+          setMilestoneSeen(goal.id, threshold);
+          setCelebration({ goalId: goal.id, goalName: MEASUREMENT_LABELS[goal.measurementType], pct: threshold });
+          return;
+        }
+      }
+    }
+  }, [loading, goalTargets, latest]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-fill start value from latest logged when metric changes
   useEffect(() => {
@@ -170,34 +346,76 @@ function GoalsInner() {
   async function handleCreateGoal() {
     if (!newTargetValue || !newTargetDate) return;
     setSaving(true);
-    const goal = {
-      profile,
-      measurementType: newMetric,
-      startValue: newStartValue ? parseFloat(newStartValue) : null,
-      targetValue: parseFloat(newTargetValue),
-      startDate: new Date().toISOString().split('T')[0],
-      targetDate: newTargetDate,
-      note: newNote || undefined,
-    };
-    if (!isGuest) {
-      await saveGoalTarget(goal);
-      const updated = await loadGoalTargets(profile);
-      setGoalTargets(updated);
+    if (createTab === 'measurement') {
+      const goal = {
+        profile,
+        measurementType: newMetric,
+        startValue: newStartValue ? parseFloat(newStartValue) : null,
+        targetValue: parseFloat(newTargetValue),
+        startDate: new Date().toISOString().split('T')[0],
+        targetDate: newTargetDate,
+        note: newNote || undefined,
+      };
+      if (!isGuest) {
+        await saveGoalTarget(goal);
+        const updated = await loadGoalTargets(profile);
+        setGoalTargets(updated);
+      } else {
+        setGoalTargets(g => [...g, { ...goal, id: `guest-goal-${Date.now()}`, achieved: false }]);
+      }
     } else {
-      const fakeGoal: GoalTarget = { ...goal, id: `guest-goal-${Date.now()}`, achieved: false };
-      setGoalTargets(g => [...g, fakeGoal]);
+      if (!newActivityTarget) { setSaving(false); return; }
+      const ag: ActivityGoal = {
+        id: `ag-${Date.now()}`,
+        type: newActivityType,
+        targetValue: parseInt(newActivityTarget),
+        startDate: new Date().toISOString().split('T')[0],
+        targetDate: newTargetDate,
+        note: newNote || undefined,
+        achieved: false,
+      };
+      saveActivityGoal(ag);
+      setActivityGoals(getActivityGoals());
     }
-    setNewTargetValue(''); setNewTargetDate(''); setNewNote('');
+    setNewTargetValue(''); setNewTargetDate(''); setNewNote(''); setNewActivityTarget('');
     setShowCreate(false); setSaving(false);
   }
 
   async function handleAchieved(id: string) {
-    await markGoalAchieved(id);
+    if (!isGuest) await markGoalAchieved(id);
     setGoalTargets(g => g.map(t => t.id === id ? { ...t, achieved: true } : t));
+  }
+
+  async function handleDelete(id: string) {
+    if (!isGuest) await deleteGoalTarget(id);
+    setGoalTargets(g => g.filter(t => t.id !== id));
+  }
+
+  function openEdit(goal: GoalTarget) {
+    setEditingGoal(goal);
+    setEditTargetValue(String(goal.targetValue));
+    setEditTargetDate(goal.targetDate);
+    setEditStartValue(goal.startValue !== null ? String(goal.startValue) : '');
+    setEditNote(goal.note ?? '');
+  }
+
+  async function handleSaveEdit() {
+    if (!editingGoal || !editTargetValue || !editTargetDate) return;
+    setSaving(true);
+    const patch = {
+      targetValue: parseFloat(editTargetValue),
+      targetDate: editTargetDate,
+      startValue: editStartValue ? parseFloat(editStartValue) : null,
+      note: editNote || undefined,
+    };
+    if (!isGuest) await updateGoalTarget(editingGoal.id, patch);
+    setGoalTargets(g => g.map(t => t.id === editingGoal.id ? { ...t, ...patch } : t));
+    setEditingGoal(null); setSaving(false);
   }
 
   const activeGoals = goalTargets.filter(g => !g.achieved);
   const achievedGoals = goalTargets.filter(g => g.achieved);
+  const activeActivityGoals = activityGoals.filter(g => !g.achieved);
 
   const byDate: Record<string, GoalEntry[]> = {};
   entries.forEach(e => { if (!byDate[e.date]) byDate[e.date] = []; byDate[e.date].push(e); });
@@ -224,16 +442,16 @@ function GoalsInner() {
         {/* Weekly reminder */}
         {needsUpdate && (
           <button onClick={() => setShowLog(true)} className="w-full rounded-xl border px-4 py-3 text-left" style={{ backgroundColor: 'var(--accent-10)', borderColor: 'var(--accent-50)' }}>
-            <p className="text-[var(--accent)] font-semibold text-sm">🎲 Time for your weekly check-in!</p>
+            <p className="text-[var(--accent)] font-semibold text-sm">📏 Weekly check-in due!</p>
             <p className="text-gray-400 text-xs mt-0.5">Last logged {daysSince} days ago — tap to update →</p>
           </button>
         )}
 
-        {/* Active goals */}
+        {/* Active measurement goals */}
         {!loading && (
           <div>
             <p className="text-gray-400 text-xs uppercase tracking-widest mb-2">Active Goals</p>
-            {activeGoals.length === 0 ? (
+            {activeGoals.length === 0 && activeActivityGoals.length === 0 ? (
               <div className="rounded-xl bg-[var(--card-bg)] border border-gray-800 px-4 py-6 text-center">
                 <p className="text-gray-500 text-sm">No active goals.</p>
                 <p className="text-gray-600 text-xs mt-1">Create one below to start tracking your progress.</p>
@@ -241,7 +459,12 @@ function GoalsInner() {
             ) : (
               <div className="flex flex-col gap-3">
                 {activeGoals.map(g => (
-                  <GoalCard key={g.id} goal={g} latest={latest} onAchieved={handleAchieved} isGuest={isGuest} />
+                  <GoalCard key={g.id} goal={g} latest={latest} onAchieved={handleAchieved}
+                    onEdit={openEdit} onDelete={handleDelete} isGuest={isGuest} />
+                ))}
+                {activeActivityGoals.map(g => (
+                  <ActivityGoalCard key={g.id} goal={g}
+                    onDelete={id => { deleteActivityGoal(id); setActivityGoals(getActivityGoals()); }} />
                 ))}
               </div>
             )}
@@ -262,8 +485,8 @@ function GoalsInner() {
           Log Today's Numbers
         </button>
 
-        {/* Achieved goals (collapsed) */}
-        {achievedGoals.length > 0 && (
+        {/* Achieved goals */}
+        {(achievedGoals.length > 0) && (
           <div>
             <p className="text-gray-400 text-xs uppercase tracking-widest mb-2">Achieved 🏆</p>
             <div className="flex flex-col gap-2">
@@ -280,7 +503,7 @@ function GoalsInner() {
           </div>
         )}
 
-        {/* Current snapshot */}
+        {/* Current measurements with sparklines */}
         {Object.keys(latest).length > 0 && (
           <div>
             <p className="text-gray-400 text-xs uppercase tracking-widest mb-2">Current Measurements</p>
@@ -336,96 +559,192 @@ function GoalsInner() {
         )}
       </div>
 
+      {/* ── Milestone celebration overlay ── */}
+      {celebration && (
+        <MilestoneCelebration
+          goalName={celebration.goalName}
+          pct={celebration.pct}
+          onDismiss={() => setCelebration(null)}
+        />
+      )}
+
       {/* ── Create Goal sheet ── */}
       {showCreate && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/70" onClick={() => setShowCreate(false)}>
-          <div className="bg-[var(--card-bg)] rounded-t-2xl overflow-y-auto max-h-[85dvh]" onClick={e => e.stopPropagation()}>
+          <div className="bg-[var(--card-bg)] rounded-t-2xl overflow-y-auto max-h-[90dvh]" onClick={e => e.stopPropagation()}>
             <div className="sticky top-0 bg-[var(--card-bg)] px-4 pt-4 pb-3 border-b border-gray-800">
               <div className="w-10 h-1 bg-gray-700 rounded-full mx-auto mb-3" />
               <p className="font-bold text-base">Create New Goal</p>
-              <p className="text-gray-500 text-xs mt-0.5">Set a target and a deadline.</p>
+              {/* Tab switcher */}
+              <div className="flex gap-2 mt-3">
+                {(['measurement', 'activity'] as const).map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setCreateTab(tab)}
+                    className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${createTab === tab ? 'bg-[var(--accent)] text-white' : 'bg-gray-800 text-gray-400'}`}
+                  >
+                    {tab === 'measurement' ? '📏 Body Measurement' : '🏃 Fitness Challenge'}
+                  </button>
+                ))}
+              </div>
             </div>
+
             <div className="px-4 py-4 flex flex-col gap-4">
-
-              {/* Metric picker */}
-              <div>
-                <p className="text-gray-400 text-xs mb-2">What are you tracking?</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {ALL_METRICS.map(m => (
-                    <button
-                      key={m}
-                      onClick={() => setNewMetric(m)}
-                      className={`py-2.5 px-3 rounded-xl text-sm text-left transition-all
-                        ${newMetric === m ? 'bg-[var(--accent)] text-white font-semibold' : 'bg-gray-800 text-gray-300 border border-gray-700'}`}
-                    >
-                      {MEASUREMENT_LABELS[m]}
-                      <span className={`text-xs ml-1 ${newMetric === m ? 'opacity-60' : 'text-gray-500'}`}>{MEASUREMENT_UNITS[m]}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Start value */}
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <p className="text-gray-400 text-xs mb-1.5">Starting value <span className="text-gray-600">(optional)</span></p>
-                  <div className="flex items-center gap-2 bg-gray-800 border border-gray-700 rounded-xl px-3 py-3">
-                    <input
-                      type="text" inputMode="decimal"
-                      value={newStartValue}
-                      onChange={e => setNewStartValue(e.target.value)}
-                      placeholder="e.g. 185"
-                      className="flex-1 bg-transparent text-white text-sm outline-none"
-                    />
-                    <span className="text-gray-500 text-xs">{MEASUREMENT_UNITS[newMetric]}</span>
+              {createTab === 'measurement' ? (
+                <>
+                  {/* Metric picker */}
+                  <div>
+                    <p className="text-gray-400 text-xs mb-2">What are you tracking?</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {ALL_METRICS.map(m => (
+                        <button
+                          key={m}
+                          onClick={() => setNewMetric(m)}
+                          className={`py-2.5 px-3 rounded-xl text-sm text-left transition-all
+                            ${newMetric === m ? 'bg-[var(--accent)] text-white font-semibold' : 'bg-gray-800 text-gray-300 border border-gray-700'}`}
+                        >
+                          {MEASUREMENT_LABELS[m]}
+                          <span className={`text-xs ml-1 ${newMetric === m ? 'opacity-60' : 'text-gray-500'}`}>{MEASUREMENT_UNITS[m]}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-                <div className="flex-1">
-                  <p className="text-gray-400 text-xs mb-1.5">Target value</p>
-                  <div className="flex items-center gap-2 bg-gray-800 border border-gray-700 rounded-xl px-3 py-3 focus-within:border-gray-500">
-                    <input
-                      type="text" inputMode="decimal"
-                      value={newTargetValue}
-                      onChange={e => setNewTargetValue(e.target.value)}
-                      placeholder="e.g. 170"
-                      className="flex-1 bg-transparent text-white text-sm outline-none"
-                    />
-                    <span className="text-gray-500 text-xs">{MEASUREMENT_UNITS[newMetric]}</span>
-                  </div>
-                </div>
-              </div>
 
-              {/* Target date */}
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <p className="text-gray-400 text-xs mb-1.5">Starting value <span className="text-gray-600">(optional)</span></p>
+                      <div className="flex items-center gap-2 bg-gray-800 border border-gray-700 rounded-xl px-3 py-3">
+                        <input type="text" inputMode="decimal" value={newStartValue}
+                          onChange={e => setNewStartValue(e.target.value)}
+                          placeholder="e.g. 185" className="flex-1 bg-transparent text-white text-sm outline-none" />
+                        <span className="text-gray-500 text-xs">{MEASUREMENT_UNITS[newMetric]}</span>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-gray-400 text-xs mb-1.5">Target value</p>
+                      <div className="flex items-center gap-2 bg-gray-800 border border-gray-700 rounded-xl px-3 py-3">
+                        <input type="text" inputMode="decimal" value={newTargetValue}
+                          onChange={e => setNewTargetValue(e.target.value)}
+                          placeholder="e.g. 170" className="flex-1 bg-transparent text-white text-sm outline-none" />
+                        <span className="text-gray-500 text-xs">{MEASUREMENT_UNITS[newMetric]}</span>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Activity type */}
+                  <div>
+                    <p className="text-gray-400 text-xs mb-2">What's the challenge?</p>
+                    <div className="flex gap-2">
+                      {(['workout_count', 'streak'] as ActivityGoalType[]).map(type => (
+                        <button
+                          key={type}
+                          onClick={() => setNewActivityType(type)}
+                          className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-medium transition-all ${newActivityType === type ? 'bg-[var(--accent)] text-white' : 'bg-gray-800 text-gray-300 border border-gray-700'}`}
+                        >
+                          {type === 'workout_count' ? '🏋️ Total Workouts' : '🔥 Week Streak'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-gray-400 text-xs mb-1.5">
+                      Target {newActivityType === 'workout_count' ? '(# of workouts)' : '(# of weeks)'}
+                    </p>
+                    <div className="flex items-center gap-2 bg-gray-800 border border-gray-700 rounded-xl px-3 py-3">
+                      <input type="text" inputMode="numeric" value={newActivityTarget}
+                        onChange={e => setNewActivityTarget(e.target.value)}
+                        placeholder={newActivityType === 'workout_count' ? 'e.g. 20' : 'e.g. 8'}
+                        className="flex-1 bg-transparent text-white text-sm outline-none" />
+                      <span className="text-gray-500 text-xs">{ACTIVITY_UNITS[newActivityType]}</span>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Shared: Target date + note */}
               <div>
                 <p className="text-gray-400 text-xs mb-1.5">Target date</p>
-                <input
-                  type="date"
-                  value={newTargetDate}
-                  onChange={e => setNewTargetDate(e.target.value)}
+                <input type="date" value={newTargetDate} onChange={e => setNewTargetDate(e.target.value)}
                   min={new Date().toISOString().split('T')[0]}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-3 text-white text-sm outline-none focus:border-gray-500"
-                />
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-3 text-white text-sm outline-none focus:border-gray-500" />
               </div>
 
-              {/* Note */}
               <div>
                 <p className="text-gray-400 text-xs mb-1.5">Note <span className="text-gray-600">(optional)</span></p>
-                <textarea
-                  value={newNote}
-                  onChange={e => setNewNote(e.target.value)}
+                <textarea value={newNote} onChange={e => setNewNote(e.target.value)}
                   placeholder="e.g. for the beach trip in August…"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-600 outline-none resize-none focus:border-gray-500"
-                  rows={2}
-                />
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-600 outline-none resize-none"
+                  rows={2} />
               </div>
 
               <button
                 onClick={handleCreateGoal}
-                disabled={saving || !newTargetValue || !newTargetDate}
+                disabled={saving || !newTargetDate || (createTab === 'measurement' ? !newTargetValue : !newActivityTarget)}
                 className={`w-full py-4 rounded-2xl font-bold text-lg transition-all active:scale-95 mb-4
-                  ${saving || !newTargetValue || !newTargetDate ? 'bg-gray-800 text-gray-500' : 'bg-[var(--accent)] text-white'}`}
+                  ${saving || !newTargetDate ? 'bg-gray-800 text-gray-500' : 'bg-[var(--accent)] text-white'}`}
               >
                 {saving ? 'Saving…' : 'Create Goal'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Edit Goal sheet ── */}
+      {editingGoal && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/70" onClick={() => setEditingGoal(null)}>
+          <div className="bg-[var(--card-bg)] rounded-t-2xl overflow-y-auto max-h-[85dvh]" onClick={e => e.stopPropagation()}>
+            <div className="sticky top-0 bg-[var(--card-bg)] px-4 pt-4 pb-3 border-b border-gray-800">
+              <div className="w-10 h-1 bg-gray-700 rounded-full mx-auto mb-3" />
+              <p className="font-bold text-base">Edit Goal</p>
+              <p className="text-gray-500 text-xs mt-0.5">{MEASUREMENT_LABELS[editingGoal.measurementType]}</p>
+            </div>
+            <div className="px-4 py-4 flex flex-col gap-4">
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <p className="text-gray-400 text-xs mb-1.5">Starting value</p>
+                  <div className="flex items-center gap-2 bg-gray-800 border border-gray-700 rounded-xl px-3 py-3">
+                    <input type="text" inputMode="decimal" value={editStartValue}
+                      onChange={e => setEditStartValue(e.target.value)}
+                      placeholder="—" className="flex-1 bg-transparent text-white text-sm outline-none" />
+                    <span className="text-gray-500 text-xs">{MEASUREMENT_UNITS[editingGoal.measurementType]}</span>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-gray-400 text-xs mb-1.5">Target value</p>
+                  <div className="flex items-center gap-2 bg-gray-800 border border-gray-700 rounded-xl px-3 py-3">
+                    <input type="text" inputMode="decimal" value={editTargetValue}
+                      onChange={e => setEditTargetValue(e.target.value)}
+                      placeholder="—" className="flex-1 bg-transparent text-white text-sm outline-none" />
+                    <span className="text-gray-500 text-xs">{MEASUREMENT_UNITS[editingGoal.measurementType]}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-gray-400 text-xs mb-1.5">Target date</p>
+                <input type="date" value={editTargetDate} onChange={e => setEditTargetDate(e.target.value)}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-3 text-white text-sm outline-none" />
+              </div>
+
+              <div>
+                <p className="text-gray-400 text-xs mb-1.5">Note <span className="text-gray-600">(optional)</span></p>
+                <textarea value={editNote} onChange={e => setEditNote(e.target.value)}
+                  placeholder="e.g. for the beach trip in August…"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-600 outline-none resize-none"
+                  rows={2} />
+              </div>
+
+              <button
+                onClick={handleSaveEdit}
+                disabled={saving || !editTargetValue || !editTargetDate}
+                className={`w-full py-4 rounded-2xl font-bold text-lg transition-all active:scale-95 mb-4
+                  ${saving || !editTargetValue || !editTargetDate ? 'bg-gray-800 text-gray-500' : 'bg-[var(--accent)] text-white'}`}
+              >
+                {saving ? 'Saving…' : 'Save Changes'}
               </button>
             </div>
           </div>
@@ -450,13 +769,11 @@ function GoalsInner() {
                 <div key={m} className="flex items-center justify-between gap-3">
                   <label className="text-sm text-gray-300 flex-1">{MEASUREMENT_LABELS[m]}</label>
                   <div className="flex items-center gap-1.5">
-                    <input
-                      type="text" inputMode="decimal"
+                    <input type="text" inputMode="decimal"
                       value={logValues[m] ?? ''}
                       onChange={e => setLogValues(v => ({ ...v, [m]: e.target.value }))}
                       placeholder="—"
-                      className="w-20 text-right bg-gray-800 border border-gray-700 rounded-lg px-2 py-2 text-sm text-white outline-none focus:border-gray-500"
-                    />
+                      className="w-20 text-right bg-gray-800 border border-gray-700 rounded-lg px-2 py-2 text-sm text-white outline-none focus:border-gray-500" />
                     <span className="text-gray-500 text-xs w-6">{MEASUREMENT_UNITS[m]}</span>
                   </div>
                 </div>
@@ -465,7 +782,7 @@ function GoalsInner() {
                 <p className="text-gray-400 text-xs mb-1">Note (optional)</p>
                 <textarea value={logNote} onChange={e => setLogNote(e.target.value)}
                   placeholder="e.g. feeling stronger, clothes fitting better…"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 outline-none resize-none focus:border-gray-500"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 outline-none resize-none"
                   rows={2} />
               </div>
               <button
