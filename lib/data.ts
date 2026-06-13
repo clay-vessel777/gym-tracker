@@ -148,6 +148,7 @@ export type ExerciseLog = {
   setsCompleted: number;
   totalSets: number;
   weightUsed: number;
+  durationSeconds?: number; // for timed holds (e.g. Plank) — used instead of weight
   notes: string;
 };
 

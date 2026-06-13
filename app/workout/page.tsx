@@ -3,8 +3,9 @@
 import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { EXERCISES, EXERCISE_GROUPS, WORKOUT_TEMPLATES, CARDIO_MINUTES, COOLDOWN_MINUTES, WorkoutDay, TimeSlot, ExerciseLog } from '@/lib/data';
-import { getLastWeight, saveSession, getWeightHistory, saveInProgress, clearInProgress, getInProgress, getExerciseBest, detectPRs, getSessions } from '@/lib/storage';
+import { getLastWeight, saveSession, getWeightHistory, getDurationHistory, getLastDuration, saveInProgress, clearInProgress, getInProgress, getExerciseBest, detectPRs, getSessions } from '@/lib/storage';
 import RestTimer from '@/components/RestTimer';
+import HoldTimer from '@/components/HoldTimer';
 import { useTheme } from '@/components/ThemeProvider';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -44,6 +45,7 @@ function WorkoutInner() {
         setsCompleted: 0,
         totalSets: 3,
         weightUsed: ex.startingWeight, // will be overridden on mount by last-used weight
+        durationSeconds: ex.targetSeconds, // timed holds (Plank) — undefined for weighted exercises
         notes: '',
       };
     });
@@ -53,6 +55,10 @@ function WorkoutInner() {
   useEffect(() => {
     if (savedProgress?.logs) return; // resume path already has correct weights
     setLogs(ls => ls.map(log => {
+      const ex = EXERCISES[log.id];
+      if (ex.targetSeconds) {
+        return { ...log, durationSeconds: getLastDuration(log.id) ?? ex.targetSeconds };
+      }
       const lastWeight = getLastWeight(log.id);
       return lastWeight !== null ? { ...log, weightUsed: lastWeight } : log;
     }));
@@ -83,6 +89,7 @@ function WorkoutInner() {
       name: ex.name,
       setsCompleted: 0,
       weightUsed: getLastWeight(newId) ?? ex.startingWeight,
+      durationSeconds: ex.targetSeconds ? (getLastDuration(newId) ?? ex.targetSeconds) : undefined,
       notes: '',
     }));
     setShowSwap(false);
@@ -115,6 +122,10 @@ function WorkoutInner() {
   const currentLog = !isCardio && !isDone ? logs[currentIdx] : null;
   const currentExercise = currentLog ? EXERCISES[currentLog.id] : null;
   const history = currentLog ? getWeightHistory(currentLog.id) : [];
+  const durationHistory = currentLog ? getDurationHistory(currentLog.id) : [];
+  const isTimed = !!currentExercise?.targetSeconds;
+  const holdSeconds = currentLog?.durationSeconds ?? currentExercise?.targetSeconds ?? 30;
+  const allSetsDone = currentLog ? currentLog.setsCompleted >= currentLog.totalSets : false;
 
   return (
     <div className="flex flex-col min-h-dvh w-full max-w-lg mx-auto overflow-x-hidden">
@@ -196,49 +207,75 @@ function WorkoutInner() {
               )}
             </div>
 
-            {/* Weight */}
-            <div className="bg-[var(--card-bg)] border border-gray-800 rounded-xl px-4 py-3">
-              <p className="text-gray-400 text-xs mb-2">Weight (lbs)</p>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => updateLog(currentIdx, { weightUsed: Math.max(0, currentLog.weightUsed - 5) })}
-                  className="w-12 h-12 rounded-full bg-gray-800 text-2xl font-bold active:bg-gray-700 flex items-center justify-center"
-                >−</button>
-                <input
-                  type="text"
-                  value={currentLog.weightUsed || ''}
-                  onChange={e => updateLog(currentIdx, { weightUsed: Number(e.target.value.replace(/[^0-9]/g, '')) })}
-                  className="flex-1 min-w-0 text-center text-3xl font-bold bg-transparent outline-none"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  placeholder={String(currentExercise.startingWeight)}
-                />
-                <button
-                  onClick={() => updateLog(currentIdx, { weightUsed: currentLog.weightUsed + 5 })}
-                  className="w-12 h-12 rounded-full bg-gray-800 text-2xl font-bold active:bg-gray-700 flex items-center justify-center"
-                >+</button>
+            {/* Hold Time (timed exercises like Plank) */}
+            {isTimed ? (
+              <div className="bg-[var(--card-bg)] border border-gray-800 rounded-xl px-4 py-3 flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-gray-400 text-xs">Hold Time</p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => updateLog(currentIdx, { durationSeconds: Math.max(5, holdSeconds - 5) })}
+                      className="w-8 h-8 rounded-full bg-gray-800 text-lg font-bold active:bg-gray-700 flex items-center justify-center"
+                    >−</button>
+                    <span className="text-sm font-bold w-12 text-center tabular-nums">{holdSeconds}s</span>
+                    <button
+                      onClick={() => updateLog(currentIdx, { durationSeconds: holdSeconds + 5 })}
+                      className="w-8 h-8 rounded-full bg-gray-800 text-lg font-bold active:bg-gray-700 flex items-center justify-center"
+                    >+</button>
+                  </div>
+                </div>
+                <HoldTimer duration={holdSeconds} />
+                {durationHistory.length > 0 && (
+                  <p className="text-gray-500 text-xs text-center">
+                    Last: {durationHistory[durationHistory.length - 1]}s
+                    {durationHistory.length > 1 && ` · Best: ${Math.max(...durationHistory)}s`}
+                  </p>
+                )}
               </div>
-              {history.length > 0 && (
-                <p className="text-gray-500 text-xs text-center mt-2">
-                  Last: {history[history.length - 1]} lbs
-                  {history.length > 1 && ` · Best: ${Math.max(...history)} lbs`}
-                </p>
-              )}
-              {/* Progressive overload nudge — Phase 3 only, when weight matches all-time best */}
-              {phase === 3 && currentLog.weightUsed > 0 && currentLog.weightUsed === getExerciseBest(currentLog.id) && history.length > 1 && (
-                <p className="text-xs text-center mt-1.5" style={{ color: 'var(--accent)' }}>
-                  💡 That's your best — try {currentLog.weightUsed + 5} lbs next time?
-                </p>
-              )}
-            </div>
+            ) : (
+              <div className="bg-[var(--card-bg)] border border-gray-800 rounded-xl px-4 py-3">
+                <p className="text-gray-400 text-xs mb-2">Weight (lbs)</p>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => updateLog(currentIdx, { weightUsed: Math.max(0, currentLog.weightUsed - 5) })}
+                    className="w-12 h-12 rounded-full bg-gray-800 text-2xl font-bold active:bg-gray-700 flex items-center justify-center"
+                  >−</button>
+                  <input
+                    type="text"
+                    value={currentLog.weightUsed || ''}
+                    onChange={e => updateLog(currentIdx, { weightUsed: Number(e.target.value.replace(/[^0-9]/g, '')) })}
+                    className="flex-1 min-w-0 text-center text-3xl font-bold bg-transparent outline-none"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder={String(currentExercise.startingWeight)}
+                  />
+                  <button
+                    onClick={() => updateLog(currentIdx, { weightUsed: currentLog.weightUsed + 5 })}
+                    className="w-12 h-12 rounded-full bg-gray-800 text-2xl font-bold active:bg-gray-700 flex items-center justify-center"
+                  >+</button>
+                </div>
+                {history.length > 0 && (
+                  <p className="text-gray-500 text-xs text-center mt-2">
+                    Last: {history[history.length - 1]} lbs
+                    {history.length > 1 && ` · Best: ${Math.max(...history)} lbs`}
+                  </p>
+                )}
+                {/* Progressive overload nudge — Phase 3 only, when weight matches all-time best */}
+                {phase === 3 && currentLog.weightUsed > 0 && currentLog.weightUsed === getExerciseBest(currentLog.id) && history.length > 1 && (
+                  <p className="text-xs text-center mt-1.5" style={{ color: 'var(--accent)' }}>
+                    💡 That's your best — try {currentLog.weightUsed + 5} lbs next time?
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Sets */}
             <div className="bg-[var(--card-bg)] border border-gray-800 rounded-xl px-4 py-3">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-gray-400 text-xs">Sets</p>
                 <p className="text-gray-500 text-xs">
-                  {currentExercise.targetSeconds
-                    ? `3 × ${currentExercise.targetSeconds}s`
+                  {isTimed
+                    ? `3 × ${holdSeconds}s`
                     : `3 × ${currentExercise.targetReps ?? 12} reps`}
                 </p>
               </div>
@@ -289,27 +326,38 @@ function WorkoutInner() {
             )}
 
             {/* Nav buttons */}
-            <div className="flex gap-3 mt-auto">
-              {currentIdx > 0 && (
+            <div className="mt-auto flex flex-col gap-2">
+              {!allSetsDone && (
+                <p className="text-center text-xs text-gray-500">
+                  Complete all {currentLog.totalSets} sets to continue
+                </p>
+              )}
+              <div className="flex gap-3">
                 <button
                   onClick={() => setCurrentIdx(i => i - 1)}
                   className="py-4 px-5 rounded-xl border border-gray-700 text-gray-400 font-medium active:bg-gray-800"
                 >
                   ← Back
                 </button>
-              )}
-              <button
-                onClick={() => {
-                  if (currentIdx < exerciseIds.length - 1) {
-                    setCurrentIdx(i => i + 1);
-                  } else {
-                    setCurrentIdx(exerciseIds.length);
-                  }
-                }}
-                className={`flex-1 py-4 ${t.btnRadius} bg-[var(--accent)] text-white font-bold text-lg active:scale-95 transition-transform`}
-              >
-                {currentIdx < exerciseIds.length - 1 ? 'Next Exercise →' : 'All Done →'}
-              </button>
+                <button
+                  disabled={!allSetsDone}
+                  onClick={() => {
+                    if (!allSetsDone) return;
+                    if (currentIdx < exerciseIds.length - 1) {
+                      setCurrentIdx(i => i + 1);
+                    } else {
+                      setCurrentIdx(exerciseIds.length);
+                    }
+                  }}
+                  className={`flex-1 py-4 ${t.btnRadius} font-bold text-lg transition-transform ${
+                    allSetsDone
+                      ? 'bg-[var(--accent)] text-white active:scale-95'
+                      : 'bg-gray-800 text-gray-600 cursor-not-allowed'
+                  }`}
+                >
+                  {currentIdx < exerciseIds.length - 1 ? 'Next Exercise →' : 'All Done →'}
+                </button>
+              </div>
             </div>
           </>
         )}
@@ -341,12 +389,20 @@ function WorkoutInner() {
               </div>
             )}
 
-            <button
-              onClick={finishWorkout}
-              className={`w-full max-w-xs py-4 bg-[var(--accent)] text-white font-bold ${t.btnRadius} text-lg active:scale-95 transition-transform`}
-            >
-              {guestMode ? 'Done → Home' : t.finishCta}
-            </button>
+            <div className="w-full max-w-xs flex flex-col gap-3">
+              <button
+                onClick={finishWorkout}
+                className={`w-full py-4 bg-[var(--accent)] text-white font-bold ${t.btnRadius} text-lg active:scale-95 transition-transform`}
+              >
+                {guestMode ? 'Done → Home' : t.finishCta}
+              </button>
+              <button
+                onClick={() => setCurrentIdx(exerciseIds.length - 1)}
+                className="w-full py-3 rounded-xl border border-gray-700 text-gray-400 font-medium active:bg-gray-800"
+              >
+                ← Back to Last Exercise
+              </button>
+            </div>
           </div>
         )}
       </div>

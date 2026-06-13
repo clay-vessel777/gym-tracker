@@ -324,6 +324,21 @@ export function getWeightHistory(exerciseId: string): number[] {
     .slice(-5);
 }
 
+// ---- Timed-hold history (e.g. Plank) ----
+
+export function getDurationHistory(exerciseId: string): number[] {
+  return getLocalSessions()
+    .flatMap(s => s.exercises.filter(e => e.id === exerciseId && (e.durationSeconds ?? 0) > 0))
+    .map(e => e.durationSeconds!)
+    .reverse()
+    .slice(-5);
+}
+
+export function getLastDuration(exerciseId: string): number | null {
+  const h = getDurationHistory(exerciseId);
+  return h.length > 0 ? h[h.length - 1] : null;
+}
+
 // ---- Rotation ----
 
 const DAY_ORDER: WorkoutDay[] = ['A', 'B', 'C'];

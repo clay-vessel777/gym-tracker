@@ -24,7 +24,7 @@ export default function DonePage() {
       `⏱️ ${session.durationMinutes} min actual`,
       '',
       ...session.exercises.map(e =>
-        `• ${e.name}: ${e.setsCompleted}/${e.totalSets} sets @ ${e.weightUsed > 0 ? `${e.weightUsed} lbs` : 'bodyweight'}${e.notes ? ` (${e.notes})` : ''}`
+        `• ${e.name}: ${e.setsCompleted}/${e.totalSets} sets @ ${e.weightUsed > 0 ? `${e.weightUsed} lbs` : e.durationSeconds ? `${e.durationSeconds}s hold` : 'bodyweight'}${e.notes ? ` (${e.notes})` : ''}`
       ),
     ];
     const text = lines.join('\n');
@@ -74,6 +74,7 @@ export default function DonePage() {
                 <span className="text-gray-500">
                   {ex.setsCompleted}/{ex.totalSets} sets
                   {ex.weightUsed > 0 && ` · ${ex.weightUsed} lbs`}
+                  {!ex.weightUsed && ex.durationSeconds ? ` · ${ex.durationSeconds}s` : ''}
                 </span>
               </div>
             );

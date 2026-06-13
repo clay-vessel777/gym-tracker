@@ -77,6 +77,7 @@ export default function HistoryPage() {
                           <span className="text-xs text-gray-500">
                             {ex.setsCompleted}/{ex.totalSets} sets
                             {ex.weightUsed > 0 && ` · ${ex.weightUsed} lbs`}
+                            {!ex.weightUsed && ex.durationSeconds ? ` · ${ex.durationSeconds}s` : ''}
                           </span>
                         </div>
                         {ex.notes && (
