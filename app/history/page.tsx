@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getSessions, loadSessionsFromCloud } from '@/lib/storage';
+import { getSessions, loadSessionsFromCloud, deleteSession } from '@/lib/storage';
 import { useTheme } from '@/components/ThemeProvider';
 import { WorkoutSession } from '@/lib/data';
 
@@ -86,6 +86,19 @@ export default function HistoryPage() {
                       </div>
                     );
                   })}
+                  <div className="px-4 py-3">
+                    <button
+                      onClick={async () => {
+                        if (!confirm('Delete this workout? This cannot be undone.')) return;
+                        await deleteSession(session.id);
+                        setSessions(s => s.filter(x => x.id !== session.id));
+                        setExpanded(null);
+                      }}
+                      className="text-xs text-red-800 border border-red-900/40 rounded-lg px-3 py-1.5 active:bg-red-900/20"
+                    >
+                      Delete workout
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

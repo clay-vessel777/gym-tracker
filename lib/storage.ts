@@ -337,6 +337,12 @@ export async function saveSession(session: WorkoutSession): Promise<void> {
   }
 }
 
+export async function deleteSession(id: string): Promise<void> {
+  const sessions = getLocalSessions().filter(s => s.id !== id);
+  setLocalSessions(sessions);
+  await supabase.from('workout_sessions').delete().eq('id', id);
+}
+
 // Load sessions from Supabase, merge with localStorage, push any missing ones up
 export async function loadSessionsFromCloud(): Promise<WorkoutSession[]> {
   const local = getLocalSessions();
