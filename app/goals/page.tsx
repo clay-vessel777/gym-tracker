@@ -65,16 +65,251 @@ function MilestoneCelebration({
   );
 }
 
+// ── Progress chart sheet ──────────────────────────────────────────────────────
+
+function ProgressChartSheet({
+  goal, entries, onClose,
+}: {
+  goal: GoalTarget;
+  entries: GoalEntry[];
+  onClose: () => void;
+}) {
+  const unit = MEASUREMENT_UNITS[goal.measurementType];
+  const label = MEASUREMENT_LABELS[goal.measurementType];
+
+  const points = entries
+    .filter(e => e.measurementType === goal.measurementType)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  const current = points.length > 0 ? points[points.length - 1].value : goal.startValue;
+  const start = goal.startValue;
+  const target = goal.targetValue;
+
+  const delta = current !== null && start !== null ? current - start : null;
+  const goalDir = start !== null && target !== start ? Math.sign(target - start) : 0;
+  const isGoodDelta = delta !== null && goalDir !== 0 && Math.sign(delta) === goalDir;
+  const deltaColor = delta === null || delta === 0 ? '#ffffff' : isGoodDelta ? '#22c55e' : '#ef4444';
+
+  let pct = 0;
+  if (start !== null && current !== null && start !== target) {
+    pct = Math.min(100, Math.max(0, ((current - start) / (target - start)) * 100));
+  }
+
+  const W = 340, H = 210;
+  const PL = 44, PR = 14, PT = 14, PB = 34;
+  const CW = W - PL - PR;
+  const CH = H - PT - PB;
+
+  const allVals = [...points.map(p => p.value), ...(start !== null ? [start] : []), target];
+  const rawMin = Math.min(...allVals);
+  const rawMax = Math.max(...allVals);
+  const rawRange = rawMax - rawMin || 1;
+  const yPad = rawRange * 0.2;
+  const yLow = rawMin - yPad;
+  const yHigh = rawMax + yPad;
+
+  const sy = (v: number) => PT + CH * (1 - (v - yLow) / (yHigh - yLow));
+
+  const toMs = (d: string) => new Date(d + 'T12:00:00').getTime();
+  const x0 = toMs(goal.startDate);
+  const xTarget = toMs(goal.targetDate);
+  const xToday = Date.now();
+  const xLast = points.length > 0 ? toMs(points[points.length - 1].date) : 0;
+  const x1 = Math.max(xTarget, xToday, xLast);
+  const xSpan = Math.max(x1 - x0, 86400000);
+
+  const sx = (ms: number) => PL + ((ms - x0) / xSpan) * CW;
+  const sxd = (d: string) => sx(toMs(d));
+
+  const txTarget = sx(xTarget);
+  const txToday = sx(xToday);
+  const targetY = sy(target);
+  const idealY1 = start !== null ? sy(start) : null;
+
+  const yTicks = [0, 1, 2, 3].map(i => Math.round((yLow + (yHigh - yLow) * (i / 3)) * 10) / 10);
+
+  const dataPts = points.map(p => ({ x: sxd(p.date), y: sy(p.value), v: p.value, date: p.date, id: p.id }));
+  const polyline = dataPts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+
+  let lineColor = '#4b5563';
+  if (dataPts.length >= 2 && goalDir !== 0) {
+    const lastV = dataPts[dataPts.length - 1].v;
+    const prevV = dataPts[dataPts.length - 2].v;
+    lineColor = Math.sign(lastV - prevV) === goalDir ? '#22c55e' : '#ef4444';
+  } else if (dataPts.length === 1) {
+    lineColor = 'var(--accent)';
+  }
+
+  const fmtDate = (d: string) =>
+    new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/70" onClick={onClose}>
+      <div className="bg-[var(--card-bg)] rounded-t-2xl overflow-y-auto max-h-[90dvh]" onClick={e => e.stopPropagation()}>
+        <div className="sticky top-0 bg-[var(--card-bg)] px-4 pt-4 pb-3 border-b border-gray-800">
+          <div className="w-10 h-1 bg-gray-700 rounded-full mx-auto mb-3" />
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="font-bold text-base">{label}</p>
+              <p className="text-gray-500 text-xs mt-0.5">
+                {start !== null ? `${start} → ${target} ${unit}` : `Target: ${target} ${unit}`}
+                {' · '}by {new Date(goal.targetDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </p>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <p className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>{Math.round(pct)}%</p>
+              <p className="text-gray-500 text-xs">of goal</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-3 py-4 flex flex-col gap-4">
+          {points.length === 0 ? (
+            <div className="py-14 text-center">
+              <p className="text-4xl mb-2">📊</p>
+              <p className="text-gray-400 text-sm">No check-ins logged yet</p>
+              <p className="text-gray-600 text-xs mt-1">Use &quot;Log Today&apos;s Numbers&quot; to start tracking</p>
+            </div>
+          ) : (
+            <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 220 }} overflow="visible">
+              {/* Y grid + labels */}
+              {yTicks.map((v, i) => (
+                <g key={i}>
+                  <line x1={PL} y1={sy(v)} x2={W - PR} y2={sy(v)} stroke="#1f2937" strokeWidth="1" />
+                  <text x={PL - 5} y={sy(v) + 4} textAnchor="end" fontSize="9" fill="#6b7280">{v}</text>
+                </g>
+              ))}
+
+              {/* Ideal pace dashed line */}
+              {idealY1 !== null && (
+                <line x1={PL} y1={idealY1} x2={txTarget} y2={targetY}
+                  stroke="#374151" strokeWidth="1.5" strokeDasharray="4 3" />
+              )}
+
+              {/* Target reference line */}
+              <line x1={PL} y1={targetY} x2={W - PR} y2={targetY}
+                stroke="#6b7280" strokeWidth="1" strokeDasharray="3 4" opacity="0.5" />
+              <text x={W - PR - 2} y={targetY - 4} textAnchor="end" fontSize="9" fill="#9ca3af">
+                Goal: {target}
+              </text>
+
+              {/* Today vertical line */}
+              {txToday > PL + 10 && txToday < W - PR - 10 && (
+                <>
+                  <line x1={txToday} y1={PT} x2={txToday} y2={PT + CH}
+                    stroke="#374151" strokeWidth="1" strokeDasharray="2 3" />
+                  <text x={txToday} y={H - 4} textAnchor="middle" fontSize="9" fill="#4b5563">Today</text>
+                </>
+              )}
+
+              {/* Actual data line */}
+              {dataPts.length >= 2 && (
+                <polyline points={polyline} fill="none" stroke={lineColor}
+                  strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+              )}
+
+              {/* Data dots + last value label */}
+              {dataPts.map((p, i) => (
+                <g key={p.id}>
+                  <circle cx={p.x} cy={p.y} r={4} fill={lineColor} stroke="var(--card-bg)" strokeWidth="1.5" />
+                  {i === dataPts.length - 1 && (
+                    <text
+                      x={p.x + (p.x > W - PR - 30 ? -8 : 8)}
+                      y={p.y - 6}
+                      textAnchor={p.x > W - PR - 30 ? 'end' : 'start'}
+                      fontSize="10" fill={lineColor} fontWeight="600"
+                    >
+                      {p.v}
+                    </text>
+                  )}
+                </g>
+              ))}
+
+              {/* Start dot */}
+              {idealY1 !== null && (
+                <circle cx={PL} cy={idealY1} r={3.5} fill="#1f2937" stroke="#4b5563" strokeWidth="1.5" />
+              )}
+
+              {/* X-axis labels */}
+              <text x={PL} y={H - 4} textAnchor="middle" fontSize="9" fill="#6b7280">
+                {fmtDate(goal.startDate)}
+              </text>
+              <text x={txTarget} y={H - 4}
+                textAnchor={txTarget > W - 40 ? 'end' : 'middle'} fontSize="9" fill="#6b7280">
+                {fmtDate(goal.targetDate)} 🎯
+              </text>
+            </svg>
+          )}
+
+          {/* Stats row */}
+          {points.length > 0 && (
+            <div className="flex gap-2">
+              <div className="flex-1 rounded-xl bg-gray-800/40 px-3 py-3 text-center">
+                <p className="text-xs text-gray-500">Current</p>
+                <p className="text-sm font-bold mt-0.5">
+                  {current} <span className="text-xs text-gray-500 font-normal">{unit}</span>
+                </p>
+              </div>
+              {delta !== null && start !== null && (
+                <div className="flex-1 rounded-xl bg-gray-800/40 px-3 py-3 text-center">
+                  <p className="text-xs text-gray-500">Changed</p>
+                  <p className="text-sm font-bold mt-0.5" style={{ color: deltaColor }}>
+                    {delta > 0 ? '+' : ''}{Math.round(delta * 10) / 10}
+                    <span className="text-xs font-normal text-gray-500 ml-0.5">{unit}</span>
+                  </p>
+                </div>
+              )}
+              <div className="flex-1 rounded-xl bg-gray-800/40 px-3 py-3 text-center">
+                <p className="text-xs text-gray-500">Check-ins</p>
+                <p className="text-sm font-bold mt-0.5">{points.length}</p>
+              </div>
+              <div className="flex-1 rounded-xl bg-gray-800/40 px-3 py-3 text-center">
+                <p className="text-xs text-gray-500">To go</p>
+                <p className="text-sm font-bold mt-0.5">
+                  {current !== null ? Math.abs(Math.round((target - current) * 10) / 10) : '—'}
+                  <span className="text-xs text-gray-500 font-normal ml-0.5">{unit}</span>
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Check-in history */}
+          {points.length > 0 && (
+            <div>
+              <p className="text-gray-500 text-xs uppercase tracking-widest mb-2">Check-in History</p>
+              <div className="rounded-xl bg-[var(--card-bg)] border border-gray-800 divide-y divide-gray-800">
+                {[...points].reverse().map(p => (
+                  <div key={p.id} className="flex items-center justify-between px-4 py-2.5">
+                    <span className="text-xs text-gray-400">
+                      {new Date(p.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                    </span>
+                    <span className="text-sm font-medium">
+                      {p.value} <span className="text-gray-500 text-xs font-normal">{unit}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="h-4" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Measurement goal card ─────────────────────────────────────────────────────
 
 function GoalCard({
-  goal, latest, onAchieved, onEdit, onDelete, isGuest,
+  goal, latest, onAchieved, onEdit, onDelete, onProgress, isGuest,
 }: {
   goal: GoalTarget;
   latest: Partial<Record<GoalMeasurementType, GoalEntry>>;
   onAchieved: (id: string) => void;
   onEdit: (goal: GoalTarget) => void;
   onDelete: (id: string) => void;
+  onProgress: (goal: GoalTarget) => void;
   isGuest: boolean;
 }) {
   const unit = MEASUREMENT_UNITS[goal.measurementType];
@@ -134,30 +369,39 @@ function GoalCard({
 
         {goal.note && <p className="text-gray-600 text-xs mt-2 italic">{goal.note}</p>}
 
-        {!goal.achieved && !isGuest && (
-          <div className="flex gap-2 mt-3">
-            <button
-              onClick={() => onAchieved(goal.id)}
-              className="text-xs text-gray-500 border border-gray-700 rounded-lg px-3 py-1.5 active:bg-gray-800"
-            >
-              Mark Achieved ✓
-            </button>
-            <button
-              onClick={() => onEdit(goal)}
-              className="text-xs text-gray-500 border border-gray-700 rounded-lg px-3 py-1.5 active:bg-gray-800"
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => {
-                if (confirm('Delete this goal?')) onDelete(goal.id);
-              }}
-              className="text-xs text-red-800 border border-red-900/40 rounded-lg px-3 py-1.5 active:bg-red-900/20"
-            >
-              Delete
-            </button>
-          </div>
-        )}
+        <div className="flex gap-2 mt-3 flex-wrap">
+          <button
+            onClick={() => onProgress(goal)}
+            className="text-xs font-medium border rounded-lg px-3 py-1.5 active:opacity-70"
+            style={{ color: 'var(--accent)', borderColor: 'var(--accent-40)' }}
+          >
+            See Progress →
+          </button>
+          {!goal.achieved && !isGuest && (
+            <>
+              <button
+                onClick={() => onAchieved(goal.id)}
+                className="text-xs text-gray-500 border border-gray-700 rounded-lg px-3 py-1.5 active:bg-gray-800"
+              >
+                Mark Achieved ✓
+              </button>
+              <button
+                onClick={() => onEdit(goal)}
+                className="text-xs text-gray-500 border border-gray-700 rounded-lg px-3 py-1.5 active:bg-gray-800"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => {
+                  if (confirm('Delete this goal?')) onDelete(goal.id);
+                }}
+                className="text-xs text-red-800 border border-red-900/40 rounded-lg px-3 py-1.5 active:bg-red-900/20"
+              >
+                Delete
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -254,6 +498,9 @@ function GoalsInner() {
 
   // Milestone celebration
   const [celebration, setCelebration] = useState<{ goalId: string; goalName: string; pct: number } | null>(null);
+
+  // Progress chart
+  const [progressGoal, setProgressGoal] = useState<GoalTarget | null>(null);
 
   // Log form
   const [logValues, setLogValues] = useState<Partial<Record<GoalMeasurementType, string>>>({});
@@ -460,7 +707,7 @@ function GoalsInner() {
               <div className="flex flex-col gap-3">
                 {activeGoals.map(g => (
                   <GoalCard key={g.id} goal={g} latest={latest} onAchieved={handleAchieved}
-                    onEdit={openEdit} onDelete={handleDelete} isGuest={isGuest} />
+                    onEdit={openEdit} onDelete={handleDelete} onProgress={setProgressGoal} isGuest={isGuest} />
                 ))}
                 {activeActivityGoals.map(g => (
                   <ActivityGoalCard key={g.id} goal={g}
@@ -496,7 +743,16 @@ function GoalsInner() {
                     <p className="text-sm text-gray-300">{MEASUREMENT_LABELS[g.measurementType]}</p>
                     <p className="text-xs text-gray-500">{g.targetValue} {MEASUREMENT_UNITS[g.measurementType]}</p>
                   </div>
-                  <span className="text-green-400 text-sm">✓</span>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setProgressGoal(g)}
+                      className="text-xs font-medium"
+                      style={{ color: 'var(--accent)' }}
+                    >
+                      See Progress →
+                    </button>
+                    <span className="text-green-400 text-sm">✓</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -559,6 +815,15 @@ function GoalsInner() {
         )}
       </div>
 
+      {/* ── Progress chart sheet ── */}
+      {progressGoal && (
+        <ProgressChartSheet
+          goal={progressGoal}
+          entries={entries}
+          onClose={() => setProgressGoal(null)}
+        />
+      )}
+
       {/* ── Milestone celebration overlay ── */}
       {celebration && (
         <MilestoneCelebration
@@ -571,7 +836,7 @@ function GoalsInner() {
       {/* ── Create Goal sheet ── */}
       {showCreate && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/70" onClick={() => setShowCreate(false)}>
-          <div className="bg-[var(--card-bg)] rounded-t-2xl overflow-y-auto max-h-[90dvh]" onClick={e => e.stopPropagation()}>
+          <div className="bg-[var(--card-bg)] rounded-t-2xl overflow-x-hidden overflow-y-auto max-h-[90dvh] w-full" onClick={e => e.stopPropagation()}>
             <div className="sticky top-0 bg-[var(--card-bg)] px-4 pt-4 pb-3 border-b border-gray-800">
               <div className="w-10 h-1 bg-gray-700 rounded-full mx-auto mb-3" />
               <p className="font-bold text-base">Create New Goal</p>
@@ -696,7 +961,7 @@ function GoalsInner() {
       {/* ── Edit Goal sheet ── */}
       {editingGoal && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/70" onClick={() => setEditingGoal(null)}>
-          <div className="bg-[var(--card-bg)] rounded-t-2xl overflow-y-auto max-h-[85dvh]" onClick={e => e.stopPropagation()}>
+          <div className="bg-[var(--card-bg)] rounded-t-2xl overflow-x-hidden overflow-y-auto max-h-[85dvh] w-full" onClick={e => e.stopPropagation()}>
             <div className="sticky top-0 bg-[var(--card-bg)] px-4 pt-4 pb-3 border-b border-gray-800">
               <div className="w-10 h-1 bg-gray-700 rounded-full mx-auto mb-3" />
               <p className="font-bold text-base">Edit Goal</p>
@@ -704,21 +969,21 @@ function GoalsInner() {
             </div>
             <div className="px-4 py-4 flex flex-col gap-4">
               <div className="flex gap-3">
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <p className="text-gray-400 text-xs mb-1.5">Starting value</p>
                   <div className="flex items-center gap-2 bg-gray-800 border border-gray-700 rounded-xl px-3 py-3">
                     <input type="text" inputMode="decimal" value={editStartValue}
                       onChange={e => setEditStartValue(e.target.value)}
-                      placeholder="—" className="flex-1 bg-transparent text-white text-sm outline-none" />
+                      placeholder="—" className="flex-1 min-w-0 bg-transparent text-white text-sm outline-none" />
                     <span className="text-gray-500 text-xs">{MEASUREMENT_UNITS[editingGoal.measurementType]}</span>
                   </div>
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <p className="text-gray-400 text-xs mb-1.5">Target value</p>
                   <div className="flex items-center gap-2 bg-gray-800 border border-gray-700 rounded-xl px-3 py-3">
                     <input type="text" inputMode="decimal" value={editTargetValue}
                       onChange={e => setEditTargetValue(e.target.value)}
-                      placeholder="—" className="flex-1 bg-transparent text-white text-sm outline-none" />
+                      placeholder="—" className="flex-1 min-w-0 bg-transparent text-white text-sm outline-none" />
                     <span className="text-gray-500 text-xs">{MEASUREMENT_UNITS[editingGoal.measurementType]}</span>
                   </div>
                 </div>
